@@ -1,0 +1,5 @@
+# Config files
+.env
+internal/configs/config.yaml
+
+.idea
