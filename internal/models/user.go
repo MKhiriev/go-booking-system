@@ -10,7 +10,7 @@ import (
 // User TODO add getters/setters
 // User TODO add username and password
 type User struct {
-	UserId    int    `json:"user_id"`
+	UserId    int    `json:"user_id" gorm:"primarykey"`
 	Name      string `json:"name"`
 	Email     string `json:"email"`
 	Telephone string `json:"telephone"`
