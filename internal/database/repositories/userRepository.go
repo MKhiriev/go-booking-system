@@ -49,7 +49,7 @@ func (u *UserRepository) GetUserById(userId int) (models.User, error) {
 
 func (u *UserRepository) Update(user models.User) (models.User, error) {
 	result := u.connection.
-		Omit("active", "deleted_at"). // `active` is changed only at DELETION
+		Omit("active", "created_at", "deleted_at"). // `active` is changed only at DELETION
 		Model(&user).
 		Updates(&user)
 
