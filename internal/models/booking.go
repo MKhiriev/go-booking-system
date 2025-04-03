@@ -10,8 +10,8 @@ type Booking struct {
 	BookingId     int       `json:"booking_id" gorm:"primarykey"`
 	UserId        int       `json:"user_id"`
 	RoomId        int       `json:"room_id"`
-	DateTimeStart time.Time `json:"datetime_start"`
-	DateTimeEnd   time.Time `json:"datetime_end"`
+	DateTimeStart time.Time `json:"datetime_start" gorm:"column:datetime_start"`
+	DateTimeEnd   time.Time `json:"datetime_end" gorm:"column:datetime_end"`
 
 	Active    bool      `json:"active"`
 	CreatedAt time.Time `json:"created_at"`
