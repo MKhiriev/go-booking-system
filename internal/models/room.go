@@ -8,7 +8,7 @@ import (
 
 // Room TODO add getters/setters
 type Room struct {
-	RoomId   int    `json:"room_id"`
+	RoomId   int    `json:"room_id" gorm:"primarykey"`
 	Number   string `json:"number"`
 	Capacity int    `json:"capacity"`
 
