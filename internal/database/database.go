@@ -26,8 +26,7 @@ type BookingRepository interface {
 	GetAll() []models.Booking
 	GetBookingById(bookingId int) (models.Booking, error)
 	GetBookingsByRoomId(roomId int) ([]models.Booking, error)
-	GetBookingsByRoomIdAndBookingTime(roomId int, dateTimeStart time.Time, dateTimeEnd time.Time) (models.Booking, error)
-	CheckIfRoomAvailable(roomId int, dateTimeStart time.Time, dateTimeEnd time.Time) ([]models.Booking, bool)
+	GetBookingsByRoomIdAndBookingTime(roomId int, dateTimeStart time.Time, dateTimeEnd time.Time) ([]models.Booking, error)
 	Update(booking models.Booking) (models.Booking, error)
 	Delete(bookingId int) (bool, error)
 }
