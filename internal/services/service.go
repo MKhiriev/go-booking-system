@@ -41,7 +41,7 @@ type RoomServiceInterface interface {
 }
 
 type UserServiceInterface interface {
-	Create(user models.User) (models.Room, error)
+	Create(user models.User) (models.User, error)
 	GetAll() []models.User
 	GetUserById(userId int) (models.User, error)
 	Update(user models.User) (models.User, error)
