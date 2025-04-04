@@ -32,7 +32,6 @@ type BookingServiceInterface interface {
 }
 
 type RoomServiceInterface interface {
-	GetAllRooms() []models.Room
 	Create(room models.Room) (models.Room, error)
 	GetAll() []models.Room
 	GetRoomById(roomId int) (models.Room, error)

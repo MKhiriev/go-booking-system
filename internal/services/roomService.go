@@ -6,40 +6,29 @@ import (
 )
 
 type RoomService struct {
-	database.RoomRepository
+	repository database.RoomRepository
 }
 
 func NewRoomService(repository database.RoomRepository) *RoomService {
-	return &RoomService{RoomRepository: repository}
-}
-
-func (r *RoomService) GetAllRooms() []models.Room {
-
-	//TODO implement me
-	panic("implement me")
+	return &RoomService{repository: repository}
 }
 
 func (r *RoomService) Create(room models.Room) (models.Room, error) {
-	//TODO implement me
-	panic("implement me")
+	return r.repository.Create(room)
 }
 
 func (r *RoomService) GetAll() []models.Room {
-	//TODO implement me
-	panic("implement me")
+	return r.repository.GetAll()
 }
 
 func (r *RoomService) GetRoomById(roomId int) (models.Room, error) {
-	//TODO implement me
-	panic("implement me")
+	return r.repository.GetRoomById(roomId)
 }
 
 func (r *RoomService) Update(room models.Room) (models.Room, error) {
-	//TODO implement me
-	panic("implement me")
+	return r.repository.Update(room)
 }
 
 func (r *RoomService) Delete(roomId int) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	return r.repository.Delete(roomId)
 }
