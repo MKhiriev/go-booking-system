@@ -6,34 +6,29 @@ import (
 )
 
 type UserService struct {
-	database.UserRepository
-}
-
-func (u *UserService) Create(user models.User) (models.Room, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserService) GetAll() []models.User {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserService) GetUserById(userId int) (models.User, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserService) Update(user models.User) (models.User, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (u *UserService) Delete(userId int) (bool, error) {
-	//TODO implement me
-	panic("implement me")
+	repository database.UserRepository
 }
 
 func NewUserService(repository database.UserRepository) *UserService {
-	return &UserService{UserRepository: repository}
+	return &UserService{repository: repository}
+}
+
+func (u *UserService) Create(user models.User) (models.User, error) {
+	return u.repository.Create(user)
+}
+
+func (u *UserService) GetAll() []models.User {
+	return u.repository.GetAll()
+}
+
+func (u *UserService) GetUserById(userId int) (models.User, error) {
+	return u.repository.GetUserById(userId)
+}
+
+func (u *UserService) Update(user models.User) (models.User, error) {
+	return u.repository.Update(user)
+}
+
+func (u *UserService) Delete(userId int) (bool, error) {
+	return u.repository.Delete(userId)
 }
