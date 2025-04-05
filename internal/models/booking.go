@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 )
@@ -27,4 +28,8 @@ func ParseBooking(data []byte) (*User, error) {
 		return user, err
 	}
 	return user, nil
+}
+
+func (b Booking) String() string {
+	return fmt.Sprintf("Booking {id: %d | time: %s - %s | date: %s | room_id: %d | user_id: %d}", b.BookingId, b.DateTimeStart.Format("15:04:05"), b.DateTimeEnd.Format("15:04:05"), b.DateTimeStart.Format("2006-01-02"), b.RoomId, b.UserId)
 }
