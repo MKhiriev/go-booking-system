@@ -47,8 +47,6 @@ func (b *BookingRepository) Delete(bookingId int) (bool, error) {
 		return false, err
 	}
 
-	log.Println(bookingToDelete)
-
 	return true, nil
 }
 
