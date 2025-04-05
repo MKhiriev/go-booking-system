@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"errors"
 	"gorm.io/gorm"
 	"humoBooking/internal/models"
 	"log"
@@ -15,25 +14,6 @@ type BookingRepository struct {
 }
 
 func (b *BookingRepository) Update(booking models.Booking) (models.Booking, error) {
-	// checks if Overlapping bookings exists
-	overlappingBookings, err := b.GetBookingsByRoomIdAndBookingTime(
-		booking.RoomId, booking.DateTimeStart, booking.DateTimeEnd)
-	if err != nil {
-		log.Println("BookingRepository.GetBookingsByRoomIdAndBookingTime(): error occured during Booking creation. Passed data: ",
-			booking.RoomId, booking.DateTimeStart, booking.DateTimeEnd)
-		log.Println(err)
-		return models.Booking{}, err
-	}
-	if len(overlappingBookings) == 1 && overlappingBookings[0].BookingId == booking.BookingId {
-		log.Println("everything is cool")
-	} else if len(overlappingBookings) > 0 {
-		log.Println("Booking cannot be updated. Reason: overlaps with existing bookings")
-		for _, overlappingBooking := range overlappingBookings {
-			log.Println(overlappingBooking)
-		}
-		return models.Booking{}, errors.New("booking cannot be updated. Reason: overlaps with existing bookings")
-	}
-
 	result := b.connection.
 		Omit("active", "created_at", "deleted_at"). // `active` is changed only at DELETION
 		Model(&booking).
@@ -77,23 +57,6 @@ func NewBookingRepositoryPostgres(connection *gorm.DB) *BookingRepository {
 }
 
 func (b *BookingRepository) Create(booking models.Booking) (models.Booking, error) {
-	// checks if Overlapping bookingsa exists
-	overlappingBookings, err := b.GetBookingsByRoomIdAndBookingTime(
-		booking.RoomId, booking.DateTimeStart, booking.DateTimeEnd)
-	if err != nil {
-		log.Println("BookingRepository.GetBookingsByRoomIdAndBookingTime(): error occured during Booking creation. Passed data: ",
-			booking.RoomId, booking.DateTimeStart, booking.DateTimeEnd)
-		log.Println(err)
-		return models.Booking{}, err
-	}
-	if len(overlappingBookings) > 0 {
-		log.Println("Booking cannot be created. Reason: overlaps with existing bookings")
-		for _, overlappingBooking := range overlappingBookings {
-			log.Println(overlappingBooking)
-		}
-		return models.Booking{}, errors.New("booking cannot be updated. Reason: overlaps with existing bookings")
-	}
-
 	result := b.connection.
 		Omit("updated_at", "deleted_at", "active").
 		Create(&booking)
