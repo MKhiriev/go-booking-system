@@ -64,3 +64,7 @@ func (h *Handlers) CheckIfRoomAvailable(w http.ResponseWriter, r *http.Request) 
 	//TODO implement me
 	panic("implement me")
 }
+
+func (h *Handlers) GetOverlappingBookings(w http.ResponseWriter, r *http.Request) {
+
+}
