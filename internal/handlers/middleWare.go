@@ -28,9 +28,9 @@ func RecoverAllPanic(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				log.Println(err)
 				log.Println("Ошибка обработана!")
+				http.Error(w, "Серверная ошибка", http.StatusInternalServerError)
 				return
 			}
-			http.Error(w, "Серверная ошибка", http.StatusInternalServerError)
 		}()
 		next.ServeHTTP(w, r)
 	})
