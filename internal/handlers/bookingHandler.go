@@ -388,6 +388,7 @@ func (b *BookingQueryValidator) ValidateParams() {
 	for field := range b.ParamsToValidate {
 		if field == "user_id" {
 			userId, userIdErr := strconv.Atoi(b.BookingQueryParams["user_id"])
+
 			if userIdErr == nil && userId > 0 {
 				b.IsUserIdValid = true
 				b.ParamsToValidate[field] = true
@@ -411,6 +412,7 @@ func (b *BookingQueryValidator) ValidateParams() {
 			}
 		} else if field == "datetime_end" {
 			dateTimeEnd, dateTimeEndErr := time.Parse(layout, b.BookingQueryParams["datetime_end"])
+
 			if dateTimeEndErr == nil && !dateTimeEnd.IsZero() {
 				b.IsDateTimeEndValid = true
 				b.ParamsToValidate[field] = true
