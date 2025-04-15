@@ -14,7 +14,7 @@ type UserRepository struct {
 func (u *UserRepository) Create(user models.User) (models.User, error) {
 	result := u.connection.
 		Omit("updated_at", "deleted_at").
-		Select("name", "email", "telephone", "role_id", "active").
+		Select("name", "email", "telephone", "role_id", "username", "password", "active").
 		Create(&user)
 
 	if err := result.Error; err != nil {
@@ -71,7 +71,7 @@ func (u *UserRepository) Delete(userId int) (bool, error) {
 
 	result := u.connection.
 		Select("*").
-		Omit("created_at", "updated_at", "role_id", "name", "email", "telephone").
+		Omit("created_at", "updated_at", "role_id", "name", "email", "telephone", "username", "password").
 		Model(&userToDelete).
 		Updates(&userToDelete)
 
@@ -82,6 +82,51 @@ func (u *UserRepository) Delete(userId int) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (u *UserRepository) UpdatePassword(user models.User) (models.User, error) {
+	result := u.connection.
+		Omit("name", "email", "telephone", "role_id", "username", "active", "created_at", "deleted_at").
+		Model(&user).
+		Updates(&user)
+
+	if err := result.Error; err != nil {
+		log.Println("UserRepository.UpdatePassword(): error occured during password change. Passed data: ", user.UserId, user.Password)
+		log.Println(err)
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
+func (u *UserRepository) UpdateUsername(user models.User) (models.User, error) {
+	result := u.connection.
+		Omit("name", "email", "telephone", "role_id", "password", "active", "created_at", "deleted_at").
+		Model(&user).
+		Updates(&user)
+
+	if err := result.Error; err != nil {
+		log.Println("UserRepository.UpdateUsername(): error occured during username change. Passed data: ", user.UserId, user.UserName)
+		log.Println(err)
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
+func (u *UserRepository) UpdateUserRole(user models.User) (models.User, error) {
+	result := u.connection.
+		Omit("name", "email", "telephone", "username", "password", "active", "created_at", "deleted_at").
+		Model(&user).
+		Updates(&user)
+
+	if err := result.Error; err != nil {
+		log.Println("UserRepository.UpdateUserRole(): error occured during user's role change. Passed data: ", user.UserId, user.RoleId)
+		log.Println(err)
+		return models.User{}, err
+	}
+
+	return user, nil
 }
 
 func NewUserRepositoryPostgres(connection *gorm.DB) *UserRepository {

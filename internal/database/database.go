@@ -37,6 +37,9 @@ type UserRepository interface {
 	GetUserById(userId int) (models.User, error)
 	Update(user models.User) (models.User, error)
 	Delete(userId int) (bool, error)
+	UpdatePassword(user models.User) (models.User, error)
+	UpdateUsername(user models.User) (models.User, error)
+	UpdateUserRole(user models.User) (models.User, error)
 }
 
 type RoomRepository interface {

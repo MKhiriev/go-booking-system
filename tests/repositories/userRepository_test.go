@@ -229,3 +229,102 @@ func TestUserRepository_Delete(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, true, isDeleted)
 }
+
+func TestBookingRepository_UpdateUserPassword(t *testing.T) {
+	// 1. Assess
+	db, mock, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo := repositories.NewUserRepositoryPostgres(db)
+
+	userId := 3
+	newPassword := "password"
+	updateData := models.User{
+		UserId:   userId,
+		Password: newPassword,
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(
+		`UPDATE "users" SET "password"=$1,"updated_at"=$2 WHERE "user_id" = $3`,
+	)).
+		WithArgs(updateData.Password, NotNullTimeArg(), updateData.UserId).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	// 2. Act
+	updatedUser, err := repo.UpdatePassword(updateData)
+
+	// 3. Assert
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, updatedUser.UserId)
+	assert.NotEqual(t, true, updatedUser.UpdatedAt.IsZero())
+	assert.Equal(t, userId, updatedUser.UserId)
+	assert.Equal(t, newPassword, updatedUser.Password)
+}
+
+func TestBookingRepository_UpdateUserName(t *testing.T) {
+	// 1. Assess
+	db, mock, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo := repositories.NewUserRepositoryPostgres(db)
+
+	userId := 3
+	newUsername := "killfish"
+	updateData := models.User{
+		UserId:   userId,
+		UserName: newUsername,
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(
+		`UPDATE "users" SET "username"=$1,"updated_at"=$2 WHERE "user_id" = $3`,
+	)).
+		WithArgs(updateData.UserName, NotNullTimeArg(), updateData.UserId).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	// 2. Act
+	updatedUser, err := repo.UpdateUsername(updateData)
+
+	// 3. Assert
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, updatedUser.UserId)
+	assert.NotEqual(t, true, updatedUser.UpdatedAt.IsZero())
+	assert.Equal(t, userId, updatedUser.UserId)
+	assert.Equal(t, newUsername, updatedUser.UserName)
+}
+
+func TestBookingRepository_UpdateUserRole(t *testing.T) {
+	// 1. Assess
+	db, mock, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo := repositories.NewUserRepositoryPostgres(db)
+
+	userId := 3
+	newUserRole := 3
+	updateData := models.User{
+		UserId: userId,
+		RoleId: newUserRole,
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(
+		`UPDATE "users" SET "role_id"=$1,"updated_at"=$2 WHERE "user_id" = $3`,
+	)).
+		WithArgs(updateData.RoleId, NotNullTimeArg(), updateData.UserId).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	// 2. Act
+	updatedUser, err := repo.UpdateUserRole(updateData)
+
+	// 3. Assert
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, updatedUser.UserId)
+	assert.NotEqual(t, true, updatedUser.UpdatedAt.IsZero())
+	assert.Equal(t, userId, updatedUser.UserId)
+	assert.Equal(t, newUserRole, updatedUser.RoleId)
+}
