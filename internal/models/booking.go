@@ -1,9 +1,7 @@
 package models
 
 import (
-	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -18,16 +16,6 @@ type Booking struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at"`
-}
-
-func ParseBooking(data []byte) (*User, error) {
-	user := &User{}
-	err := json.Unmarshal(data, user)
-	if err != nil {
-		log.Println("Models.ParseBooking error: ", err)
-		return user, err
-	}
-	return user, nil
 }
 
 func (b Booking) String() string {
