@@ -40,6 +40,7 @@ type UserRepository interface {
 	UpdatePassword(user models.User) (models.User, error)
 	UpdateUsername(user models.User) (models.User, error)
 	UpdateUserRole(user models.User) (models.User, error)
+	GetUserByUsername(username string) (models.User, error)
 }
 
 type RoomRepository interface {

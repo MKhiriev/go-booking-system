@@ -12,7 +12,7 @@ type User struct {
 	RoleId    int    `json:"role_id"`
 
 	UserName string `json:"username" gorm:"column:username"`
-	Password string `json:"-"`
+	Password string `json:"-" gorm:"column:password_hash"`
 
 	Active    bool      `json:"active"`
 	CreatedAt time.Time `json:"created_at"`

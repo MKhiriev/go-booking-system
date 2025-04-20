@@ -14,7 +14,7 @@ type UserRepository struct {
 func (u *UserRepository) Create(user models.User) (models.User, error) {
 	result := u.connection.
 		Omit("updated_at", "deleted_at").
-		Select("name", "email", "telephone", "role_id", "username", "password", "active").
+		Select("name", "email", "telephone", "role_id", "username", "password_hash", "active").
 		Create(&user)
 
 	if err := result.Error; err != nil {
@@ -71,7 +71,7 @@ func (u *UserRepository) Delete(userId int) (bool, error) {
 
 	result := u.connection.
 		Select("*").
-		Omit("created_at", "updated_at", "role_id", "name", "email", "telephone", "username", "password").
+		Omit("created_at", "updated_at", "role_id", "name", "email", "telephone", "username", "password_hash").
 		Model(&userToDelete).
 		Updates(&userToDelete)
 
@@ -101,7 +101,7 @@ func (u *UserRepository) UpdatePassword(user models.User) (models.User, error) {
 
 func (u *UserRepository) UpdateUsername(user models.User) (models.User, error) {
 	result := u.connection.
-		Omit("name", "email", "telephone", "role_id", "password", "active", "created_at", "deleted_at").
+		Omit("name", "email", "telephone", "role_id", "password_hash", "active", "created_at", "deleted_at").
 		Model(&user).
 		Updates(&user)
 
@@ -116,7 +116,7 @@ func (u *UserRepository) UpdateUsername(user models.User) (models.User, error) {
 
 func (u *UserRepository) UpdateUserRole(user models.User) (models.User, error) {
 	result := u.connection.
-		Omit("name", "email", "telephone", "username", "password", "active", "created_at", "deleted_at").
+		Omit("name", "email", "telephone", "username", "password_hash", "active", "created_at", "deleted_at").
 		Model(&user).
 		Updates(&user)
 
@@ -127,6 +127,19 @@ func (u *UserRepository) UpdateUserRole(user models.User) (models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (u *UserRepository) GetUserByUsername(username string) (models.User, error) {
+	var foundUserByUsername models.User
+	result := u.connection.Find(&foundUserByUsername, "username", username)
+
+	if err := result.Error; err != nil {
+		log.Println("UserRepository.GetUserByUsername(): error occured during User search. Passed data: ", username)
+		log.Println(err)
+		return models.User{}, err
+	}
+
+	return foundUserByUsername, nil
 }
 
 func NewUserRepositoryPostgres(connection *gorm.DB) *UserRepository {
