@@ -13,10 +13,6 @@ func NewUserService(repository database.UserRepository) *UserService {
 	return &UserService{repository: repository}
 }
 
-func (u *UserService) Create(user models.User) (models.User, error) {
-	return u.repository.Create(user)
-}
-
 func (u *UserService) GetAll() []models.User {
 	return u.repository.GetAll()
 }

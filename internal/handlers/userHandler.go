@@ -10,36 +10,6 @@ import (
 	"strconv"
 )
 
-func (h *Handlers) CreateUser(w http.ResponseWriter, r *http.Request) {
-	var userParams models.User
-	// convert JSON to models.User type
-	err := json.NewDecoder(r.Body).Decode(&userParams)
-	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "UserHandler.CreateUser(): cannot convert JSON to models.User struct", err.Error())
-		return
-	}
-
-	// validate passed user data
-	validator := NewUserValidator(&userParams)
-	if validator.AllUserFieldsValid != true {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "UserHandler.CreateUser(): User data is not valid!", validator)
-		return
-	}
-
-	// create user
-	createdUser, err := h.service.UserService.Create(userParams)
-	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "UserService.Create(): error occured", err.Error())
-		return
-	}
-
-	// return created user
-	pkg.Response(w, createdUser)
-}
-
 func (h *Handlers) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// get all users
 	users := h.service.UserService.GetAll()
