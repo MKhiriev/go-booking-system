@@ -3,6 +3,7 @@ package services
 import (
 	"humoBooking/internal/database"
 	"humoBooking/internal/models"
+	"humoBooking/pkg"
 	"time"
 )
 
@@ -10,6 +11,7 @@ type Service struct {
 	BookingService BookingServiceInterface
 	RoomService    RoomServiceInterface
 	UserService    UserServiceInterface
+	AuthService    AuthServiceInterface
 }
 
 func NewService(db *database.Database) *Service {
@@ -17,7 +19,20 @@ func NewService(db *database.Database) *Service {
 		BookingService: NewBookingService(db.BookingRepository),
 		RoomService:    NewRoomService(db.RoomRepository),
 		UserService:    NewUserService(db.UserRepository),
+		AuthService:    NewAuthService(db.UserRepository),
 	}
+}
+
+type AuthServiceInterface interface {
+	Create(user models.User) (models.User, error)
+	UpdatePassword(userId int, password string) (models.User, error)
+	UpdateUsername(userId int, username string) (models.User, error)
+	UpdateRole(userId int, roleId int) (models.User, error)
+	CheckIfUserExistsAndPasswordIsCorrect(username string, password string) (models.User, error)
+	GenerateTokens(user models.User, identity pkg.IPAddressIdentity) (accessToken pkg.JWTToken, refreshToken pkg.JWTToken)
+	GeneratePasswordHash(password string) string
+	ValidateAccessToken(encodedToken string, ipAddress string) *JWTTokenValidator
+	ValidateRefreshToken(encodedToken string, ipAddress string) *JWTTokenValidator
 }
 
 type BookingServiceInterface interface {
