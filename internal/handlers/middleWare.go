@@ -27,8 +27,8 @@ func RecoverAllPanic(next http.Handler) http.Handler {
 		defer func() {
 			if err := recover(); err != nil {
 				log.Println(err)
-				log.Println("Ошибка обработана!")
-				http.Error(w, "Серверная ошибка", http.StatusInternalServerError)
+				log.Println("Panic is processed!")
+				http.Error(w, "500 Internal Server Error", http.StatusInternalServerError)
 				return
 			}
 		}()
