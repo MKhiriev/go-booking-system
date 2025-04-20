@@ -29,8 +29,8 @@ type AuthServiceInterface interface {
 	UpdateUsername(userId int, username string) (models.User, error)
 	UpdateRole(userId int, roleId int) (models.User, error)
 	CheckIfUserExistsAndPasswordIsCorrect(username string, password string) (models.User, error)
-	GenerateTokens(user models.User, identity pkg.IPAddressIdentity) (accessToken pkg.JWTToken, refreshToken pkg.JWTToken)
 	GeneratePasswordHash(password string) string
+	GenerateTokens(user models.User, identity pkg.IPAddressIdentity) (accessToken pkg.JWTToken, refreshToken pkg.JWTToken)
 	ValidateAccessToken(encodedToken string, ipAddress string) *JWTTokenValidator
 	ValidateRefreshToken(encodedToken string, ipAddress string) *JWTTokenValidator
 }
