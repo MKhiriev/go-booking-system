@@ -49,16 +49,8 @@ func (h *Handlers) GetAllBookings(w http.ResponseWriter, r *http.Request) {
 	// get all bookings
 	bookings := h.service.BookingService.GetAll()
 
-	// convert all bookings to JSON
-	bookingsJSON, err := json.Marshal(bookings)
-	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingHandler.GetAllBookings(): cannot convert slice of Bookings to JSON", err.Error())
-		return
-	}
-
 	// return all bookings
-	pkg.Response(w, bookingsJSON)
+	pkg.Response(w, bookings)
 }
 
 func (h *Handlers) GetBookingById(w http.ResponseWriter, r *http.Request) {

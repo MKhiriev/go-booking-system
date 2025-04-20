@@ -44,16 +44,8 @@ func (h *Handlers) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	// get all users
 	users := h.service.UserService.GetAll()
 
-	// convert all users to JSON
-	usersJSON, err := json.Marshal(users)
-	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "UserHandler.GetAllUsers(): cannot convert slice of Users to JSON", err.Error())
-		return
-	}
-
 	// return all users
-	pkg.Response(w, usersJSON)
+	pkg.Response(w, users)
 }
 
 func (h *Handlers) GetUserById(w http.ResponseWriter, r *http.Request) {

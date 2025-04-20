@@ -36,16 +36,8 @@ func (h *Handlers) GetAllRooms(w http.ResponseWriter, r *http.Request) {
 	// get all rooms
 	rooms := h.service.RoomService.GetAll()
 
-	// convert all rooms to JSON
-	roomsJSON, err := json.Marshal(rooms)
-	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "RoomHandler.GetAllRooms(): cannot convert slice of Rooms to JSON", err.Error())
-		return
-	}
-
 	// return all rooms
-	pkg.Response(w, roomsJSON)
+	pkg.Response(w, rooms)
 }
 
 func (h *Handlers) CreateRoom(w http.ResponseWriter, r *http.Request) {
