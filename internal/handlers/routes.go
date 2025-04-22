@@ -16,7 +16,7 @@ func NewHandler(s *services.Service) *Handlers {
 
 func (h *Handlers) Init() *mux.Router {
 	router := mux.NewRouter()
-	router.Use(CORS, RecoverAllPanic)
+	router.Use(CORS, h.AuthorizationCheck, RecoverAllPanic)
 
 	// Auth Handler
 	auth := router.PathPrefix("/auth").Subrouter()
