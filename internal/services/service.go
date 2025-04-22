@@ -19,16 +19,19 @@ type Service struct {
 }
 
 func NewService(db *database.Database) *Service {
+	bookingService := NewBookingService(db.BookingRepository)
+	roomService := NewRoomService(db.RoomRepository)
+
 	roleService := NewRoleService(db.RoleRepository)
 	routeService := NewRouteService(db.RouteRepository)
 	scopeService := NewScopeService(db.ScopeRepository)
 	permissionService := NewPermissionService(db.PermissionRepository)
 
 	return &Service{
-		BookingService:    NewBookingService(db.BookingRepository),
-		RoomService:       NewRoomService(db.RoomRepository),
+		BookingService:    bookingService,
+		RoomService:       roomService,
 		UserService:       NewUserService(db.UserRepository),
-		AuthService:       NewAuthService(db.UserRepository, roleService, routeService, scopeService, permissionService),
+		AuthService:       NewAuthService(db.UserRepository, roleService, routeService, scopeService, permissionService, bookingService, roomService),
 		RoleService:       roleService,
 		RouteService:      routeService,
 		ScopeService:      scopeService,
@@ -42,7 +45,7 @@ type AuthServiceInterface interface {
 	UpdateUsername(userId int, username string) (models.User, error)
 	UpdateRole(userId int, roleId int) (models.User, error)
 	CheckIfUserExistsAndPasswordIsCorrect(username string, password string) (models.User, error)
-	CheckPermissions(destination string, httpMethod string, subject string, roleString string) (bool, error)
+	CheckPermissions(destination string, recordType string, recordId string, subject string, roleString string) (bool, error)
 	GeneratePasswordHash(password string) string
 	GenerateTokens(user models.User, identity pkg.IPAddressIdentity) (accessToken pkg.JWTToken, refreshToken pkg.JWTToken)
 	ValidateAccessToken(encodedToken string, ipAddress string) *JWTTokenValidator
@@ -87,6 +90,7 @@ type RouteServiceInterface interface {
 	Create(route models.Route) (models.Route, error)
 	GetAll() []models.Route
 	GetRouteById(routeId int) (models.Route, error)
+	GetRouteByURL(url string) (models.Route, error)
 	Update(route models.Route) (models.Route, error)
 	Delete(routeId int) (bool, error)
 }
@@ -104,6 +108,7 @@ type PermissionServiceInterface interface {
 	GetAll() []models.Permission
 	GetPermissionsByRoleId(roleId int) ([]models.Permission, error)
 	GetPermissionsByRouteId(routeId int) ([]models.Permission, error)
+	GetPermissionsByRoleIdAndRouteId(roleId int, routeId int) ([]models.Permission, error)
 	Update(permission models.Permission) (models.Permission, error)
 	Delete(roleId int, routeId int) (bool, error)
 }

@@ -25,6 +25,10 @@ func (r *RouteService) GetRouteById(routeId int) (models.Route, error) {
 	return r.repository.GetRouteById(routeId)
 }
 
+func (r *RouteService) GetRouteByURL(url string) (models.Route, error) {
+	return r.repository.GetRouteByURL(url)
+}
+
 func (r *RouteService) Update(route models.Route) (models.Route, error) {
 	return r.repository.Update(route)
 }

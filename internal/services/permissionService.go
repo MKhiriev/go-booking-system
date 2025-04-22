@@ -29,6 +29,10 @@ func (r *PermissionService) GetPermissionsByRouteId(routeId int) ([]models.Permi
 	return r.repository.GetPermissionsByRouteId(routeId)
 }
 
+func (r *PermissionService) GetPermissionsByRoleIdAndRouteId(roleId int, routeId int) ([]models.Permission, error) {
+	return r.repository.GetPermissionsByRoleIdAndRouteId(roleId, routeId)
+}
+
 func (r *PermissionService) Update(permission models.Permission) (models.Permission, error) {
 	return r.repository.Update(permission)
 }

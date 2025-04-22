@@ -14,11 +14,15 @@ import (
 )
 
 type AuthService struct {
-	repository        database.UserRepository
+	userRepository    database.UserRepository
 	roleService       RoleServiceInterface
 	routeService      RouteServiceInterface
 	scopeService      ScopeServiceInterface
 	permissionService PermissionServiceInterface
+
+	// to perform IsOwner check
+	bookingService BookingServiceInterface
+	roomService    RoomServiceInterface
 }
 
 const (
@@ -32,19 +36,21 @@ const (
 	refreshTokenTTL = 3 * time.Hour
 )
 
-func NewAuthService(repository database.UserRepository, roleService RoleServiceInterface, routeService RouteServiceInterface, scopeService ScopeServiceInterface, permissionService PermissionServiceInterface) *AuthService {
+func NewAuthService(repository database.UserRepository, roleService RoleServiceInterface, routeService RouteServiceInterface, scopeService ScopeServiceInterface, permissionService PermissionServiceInterface, bookingService BookingServiceInterface, roomService RoomServiceInterface) *AuthService {
 	return &AuthService{
-		repository:        repository,
+		userRepository:    repository,
 		roleService:       roleService,
 		routeService:      routeService,
 		scopeService:      scopeService,
 		permissionService: permissionService,
+		bookingService:    bookingService,
+		roomService:       roomService,
 	}
 }
 
 func (a *AuthService) CheckIfUserExistsAndPasswordIsCorrect(username string, password string) (models.User, error) {
 	// Identification
-	foundUser, err := a.repository.GetUserByUsername(username)
+	foundUser, err := a.userRepository.GetUserByUsername(username)
 	if err != nil {
 		log.Println("AuthService.CheckIfUserExistsAndPasswordIsCorrect(): error occured during User search. Passed data: ", username)
 		return models.User{}, fmt.Errorf(`error occured during User search. Passed data: '%s'`, username)
@@ -114,21 +120,21 @@ func (a *AuthService) Create(user models.User) (models.User, error) {
 	passwordHash := a.GeneratePasswordHash(user.Password)
 	user.Password = passwordHash
 
-	return a.repository.Create(user)
+	return a.userRepository.Create(user)
 }
 
 func (a *AuthService) UpdatePassword(userId int, password string) (models.User, error) {
 	passwordHash := a.GeneratePasswordHash(password)
 
-	return a.repository.UpdatePassword(models.User{UserId: userId, Password: passwordHash})
+	return a.userRepository.UpdatePassword(models.User{UserId: userId, Password: passwordHash})
 }
 
 func (a *AuthService) UpdateUsername(userId int, username string) (models.User, error) {
-	return a.repository.UpdateUsername(models.User{UserId: userId, UserName: username})
+	return a.userRepository.UpdateUsername(models.User{UserId: userId, UserName: username})
 }
 
 func (a *AuthService) UpdateRole(userId int, roleId int) (models.User, error) {
-	return a.repository.UpdateUserRole(models.User{UserId: userId, RoleId: roleId})
+	return a.userRepository.UpdateUserRole(models.User{UserId: userId, RoleId: roleId})
 }
 
 func (a *AuthService) GeneratePasswordHash(password string) string {
@@ -172,10 +178,101 @@ func (a *AuthService) SignHeaderAndPayload(encodedJOSEHeader string, encodedClai
 	return pkg.SignHeaderAndPayload(encodedJOSEHeader, encodedClaims, accessTokenKey)
 }
 
-// CheckPermissions TODO implement me
-func (a *AuthService) CheckPermissions(destination string, httpMethod string, subject string, roleString string) (bool, error) {
-	// right now this method authorises every request
+const (
+	AllScopeId   = 1
+	OwnerScopeId = 2
+)
+
+func (a *AuthService) CheckPermissions(destination string, recordType string, recordString string, subject string, roleString string) (bool, error) {
+	roleId, conversionError := strconv.Atoi(roleString)
+	if conversionError != nil {
+		log.Println("AuthService.CheckPermissions(): error occured during conversion from `role` string to `RoleId` integer")
+		return false, conversionError
+	}
+
+	// get routeId by url
+	route, err := a.routeService.GetRouteByURL(destination)
+	if err != nil {
+		log.Println("AuthService.CheckPermissions(): error occured during getting route by URL. Passed data: ", destination)
+		return false, err
+	}
+
+	// check if no route has been found
+	emptyRoute := models.Route{}
+	if route == emptyRoute {
+		log.Println("AuthService.CheckPermissions(): no route has been found. Passed data: ", destination)
+		return false, fmt.Errorf("no route has been found. Passed data: %s", destination)
+	}
+
+	// find permissions by roleId and routeId
+	permissions, err := a.permissionService.GetPermissionsByRoleIdAndRouteId(roleId, route.RouteId)
+	if err != nil {
+		log.Printf("AuthService.CheckPermissions(): error occured during getting permissions by RoleId and RouteId. Passed data: RoleId=%d RouteId=%d", roleId, route.RouteId)
+		return false, err
+	}
+
+	// check if no permissions were found
+	if len(permissions) == 0 {
+		log.Printf("AuthService.CheckPermissions(): no permissions has been found by RoleId and RouteId. Passed data: RoleId=%d RouteId=%d", roleId, route.RouteId)
+		return false, errors.New("no permissions has been found. Access denied")
+	}
+
+	userId, conversionError := strconv.Atoi(subject)
+	if conversionError != nil {
+		log.Println("AuthService.CheckPermissions(): error occured during conversion from `subject` string to `UserId` integer")
+		return false, conversionError
+	}
+	recordId, conversionError := strconv.Atoi(recordString)
+	if conversionError != nil {
+		log.Println("AuthService.CheckPermissions(): error occured during conversion from `recordString` string to `recordId` integer")
+		return false, conversionError
+	}
+
+	// check if user has right to perform action over chosen record
+	for _, permission := range permissions {
+		// check if role has rights over of ALL the records
+		if permission.ScopeId == AllScopeId {
+			return true, nil // then he has rights over all records - everything is ok
+		}
+		if permission.ScopeId == OwnerScopeId {
+			// TODO add to all READ/UPDATE/DELETE methods id value
+			isOwner, isOwnerError := a.CheckIfUserIsOwner(userId, recordType, recordId)
+			if isOwnerError != nil {
+				return false, isOwnerError
+			}
+			if isOwner == true {
+				return true, nil
+			}
+		}
+	}
+
 	return true, nil
+}
+
+// CheckIfUserIsOwner TODO add CreatedBy column to all entities
+func (a *AuthService) CheckIfUserIsOwner(userId int, recordType string, idValue int) (bool, error) {
+	if recordType == "room" {
+		return true, nil
+	}
+	if recordType == "user" {
+		foundUser, err := a.userRepository.GetUserById(idValue)
+		if err != nil {
+			return false, err
+		}
+		if foundUser.UserId == userId {
+			return true, nil
+		}
+	}
+	if recordType == "booking" {
+		foundBooking, err := a.bookingService.GetBookingById(idValue)
+		if err != nil {
+			return false, err
+		}
+		if foundBooking.UserId == userId {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 const (
@@ -204,12 +301,12 @@ type JWTTokenValidator struct {
 
 func NewJWTTokenValidator(jwtTokenString string, tokenKey string, sentFromIdentity pkg.IPAddressIdentity) *JWTTokenValidator {
 	validator := &JWTTokenValidator{JWTTokenString: jwtTokenString, tokenKey: tokenKey, SentFromIdentity: sentFromIdentity, IsEverythingValid: false}
-	validator.IsLoginValid()
+	validator.IsTokenValid()
 
 	return validator
 }
 
-func (j *JWTTokenValidator) IsLoginValid() {
+func (j *JWTTokenValidator) IsTokenValid() {
 	j.ValidateToken()
 
 	if j.ValidationError == nil {
