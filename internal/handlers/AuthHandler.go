@@ -146,7 +146,7 @@ func (h *Handlers) RefreshToken(w http.ResponseWriter, r *http.Request) {
 
 	// Validate access token
 	accessTokenValidator := h.service.AuthService.ValidateAccessToken(accessToken, ipAddress)
-	if accessTokenValidator.ValidationError != nil && accessTokenValidator.ValidationError.Error() != services.IsExpired {
+	if accessTokenValidator.ValidationError != nil && accessTokenValidator.ValidationError.Error() != services.TokenIsExpiredError {
 		log.Println("AuthHandler.RefreshToken(): error occured during validation of JWT Access Token. Details: ", accessTokenValidator.ValidationError)
 		pkg.ErrorResponse(w, http.StatusBadRequest, "error occured during validation of JWT Access Token", accessTokenValidator.ValidationError.Error())
 		return
