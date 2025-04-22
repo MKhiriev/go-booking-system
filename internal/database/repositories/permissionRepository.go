@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"gorm.io/gorm"
 	"humoBooking/internal/models"
 	"log"
@@ -56,6 +57,24 @@ func (r *PermissionRepository) GetPermissionsByRouteId(routeId int) ([]models.Pe
 	result := r.connection.Find(&foundPermissions, "route_id", routeId)
 	if err := result.Error; err != nil {
 		log.Println("PermissionRepository.GetPermissionsByRouteId(): error occured during Permissions search. Passed data: ", routeId)
+		log.Println(err)
+		return []models.Permission{}, err
+	}
+
+	return foundPermissions, nil
+}
+
+func (r *PermissionRepository) GetPermissionsByRoleIdAndRouteId(roleId int, routeId int) ([]models.Permission, error) {
+	var foundPermissions []models.Permission
+
+	result := r.connection.
+		Where("role_id = @role_id AND route_id = @route_id",
+			sql.Named("role_id", roleId),
+			sql.Named("route_id", routeId)).
+		Find(&foundPermissions)
+
+	if err := result.Error; err != nil {
+		log.Printf("PermissionRepository.GetPermissionsByRoleIdAndRouteId(): error occured during Permission deletion. Passed data: RoleId=%d RouteId=%d", roleId, routeId)
 		log.Println(err)
 		return []models.Permission{}, err
 	}

@@ -50,6 +50,19 @@ func (r *RouteRepository) GetRouteById(routeId int) (models.Route, error) {
 	return foundRoute, nil
 }
 
+func (r *RouteRepository) GetRouteByURL(url string) (models.Route, error) {
+	var foundRoute models.Route
+
+	result := r.connection.Find(&foundRoute, "url", url)
+	if err := result.Error; err != nil {
+		log.Println("RouteRepository.GetRouteByURL(): error occured during Route search. Passed data: ", url)
+		log.Println(err)
+		return models.Route{}, err
+	}
+
+	return foundRoute, nil
+}
+
 func (r *RouteRepository) Update(route models.Route) (models.Route, error) {
 	result := r.connection.
 		Omit("active", "created_at", "deleted_at").

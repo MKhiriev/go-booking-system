@@ -71,6 +71,7 @@ type RouteRepository interface {
 	Create(route models.Route) (models.Route, error)
 	GetAll() []models.Route
 	GetRouteById(routeId int) (models.Route, error)
+	GetRouteByURL(url string) (models.Route, error)
 	Update(route models.Route) (models.Route, error)
 	Delete(routeId int) (bool, error)
 }
@@ -88,6 +89,7 @@ type PermissionRepository interface {
 	GetAll() []models.Permission
 	GetPermissionsByRoleId(roleId int) ([]models.Permission, error)
 	GetPermissionsByRouteId(routeId int) ([]models.Permission, error)
+	GetPermissionsByRoleIdAndRouteId(roleId int, routeId int) ([]models.Permission, error)
 	Update(permission models.Permission) (models.Permission, error)
 	Delete(roleId int, routeId int) (bool, error)
 }
