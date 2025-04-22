@@ -11,13 +11,21 @@ type Database struct {
 	BookingRepository
 	RoomRepository
 	UserRepository
+	RoleRepository
+	RouteRepository
+	ScopeRepository
+	PermissionRepository
 }
 
 func NewDatabase(conn *gorm.DB) *Database {
 	return &Database{
-		BookingRepository: repositories.NewBookingRepositoryPostgres(conn),
-		RoomRepository:    repositories.NewRoomRepositoryPostgres(conn),
-		UserRepository:    repositories.NewUserRepositoryPostgres(conn),
+		BookingRepository:    repositories.NewBookingRepositoryPostgres(conn),
+		RoomRepository:       repositories.NewRoomRepositoryPostgres(conn),
+		UserRepository:       repositories.NewUserRepositoryPostgres(conn),
+		RoleRepository:       repositories.NewRoleRepositoryPostgres(conn),
+		RouteRepository:      repositories.NewRouteRepositoryPostgres(conn),
+		ScopeRepository:      repositories.NewScopeRepositoryPostgres(conn),
+		PermissionRepository: repositories.NewPermissionRepositoryPostgres(conn),
 	}
 }
 
