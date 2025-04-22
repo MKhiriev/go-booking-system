@@ -50,3 +50,36 @@ type RoomRepository interface {
 	Update(room models.Room) (models.Room, error)
 	Delete(roomId int) (bool, error)
 }
+
+type RoleRepository interface {
+	Create(role models.Role) (models.Role, error)
+	GetAll() []models.Role
+	GetRoleById(roleId int) (models.Role, error)
+	Update(role models.Role) (models.Role, error)
+	Delete(roleId int) (bool, error)
+}
+
+type RouteRepository interface {
+	Create(route models.Route) (models.Route, error)
+	GetAll() []models.Route
+	GetRouteById(routeId int) (models.Route, error)
+	Update(route models.Route) (models.Route, error)
+	Delete(routeId int) (bool, error)
+}
+
+type ScopeRepository interface {
+	Create(scope models.Scope) (models.Scope, error)
+	GetAll() []models.Scope
+	GetScopeById(scopeId int) (models.Scope, error)
+	Update(scope models.Scope) (models.Scope, error)
+	Delete(scopeId int) (bool, error)
+}
+
+type PermissionRepository interface {
+	Create(permission models.Permission) (models.Permission, error)
+	GetAll() []models.Permission
+	GetPermissionsByRoleId(roleId int) ([]models.Permission, error)
+	GetPermissionsByRouteId(routeId int) ([]models.Permission, error)
+	Update(permission models.Permission) (models.Permission, error)
+	Delete(roleId int, routeId int) (bool, error)
+}
