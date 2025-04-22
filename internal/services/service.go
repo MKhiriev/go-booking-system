@@ -19,15 +19,20 @@ type Service struct {
 }
 
 func NewService(db *database.Database) *Service {
+	roleService := NewRoleService(db.RoleRepository)
+	routeService := NewRouteService(db.RouteRepository)
+	scopeService := NewScopeService(db.ScopeRepository)
+	permissionService := NewPermissionService(db.PermissionRepository)
+
 	return &Service{
 		BookingService:    NewBookingService(db.BookingRepository),
 		RoomService:       NewRoomService(db.RoomRepository),
 		UserService:       NewUserService(db.UserRepository),
-		AuthService:       NewAuthService(db.UserRepository),
-		RoleService:       NewRoleService(db.RoleRepository),
-		RouteService:      NewRouteService(db.RouteRepository),
-		ScopeService:      NewScopeService(db.ScopeRepository),
-		PermissionService: NewPermissionService(db.PermissionRepository),
+		AuthService:       NewAuthService(db.UserRepository, roleService, routeService, scopeService, permissionService),
+		RoleService:       roleService,
+		RouteService:      routeService,
+		ScopeService:      scopeService,
+		PermissionService: permissionService,
 	}
 }
 

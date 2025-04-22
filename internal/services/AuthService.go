@@ -14,7 +14,11 @@ import (
 )
 
 type AuthService struct {
-	repository database.UserRepository
+	repository        database.UserRepository
+	roleService       RoleServiceInterface
+	routeService      RouteServiceInterface
+	scopeService      ScopeServiceInterface
+	permissionService PermissionServiceInterface
 }
 
 const (
@@ -28,8 +32,14 @@ const (
 	refreshTokenTTL = 3 * time.Hour
 )
 
-func NewAuthService(repository database.UserRepository) *AuthService {
-	return &AuthService{repository: repository}
+func NewAuthService(repository database.UserRepository, roleService RoleServiceInterface, routeService RouteServiceInterface, scopeService ScopeServiceInterface, permissionService PermissionServiceInterface) *AuthService {
+	return &AuthService{
+		repository:        repository,
+		roleService:       roleService,
+		routeService:      routeService,
+		scopeService:      scopeService,
+		permissionService: permissionService,
+	}
 }
 
 func (a *AuthService) CheckIfUserExistsAndPasswordIsCorrect(username string, password string) (models.User, error) {
@@ -57,6 +67,7 @@ func (a *AuthService) CheckIfUserExistsAndPasswordIsCorrect(username string, pas
 	return foundUser, nil
 }
 
+// GenerateTokens TODO Add error return value
 func (a *AuthService) GenerateTokens(user models.User, identity pkg.IPAddressIdentity) (accessToken pkg.JWTToken, refreshToken pkg.JWTToken) {
 	joseHeader := pkg.JOSEHeader{
 		Algorithm: HS256,
@@ -161,13 +172,19 @@ func (a *AuthService) SignHeaderAndPayload(encodedJOSEHeader string, encodedClai
 	return pkg.SignHeaderAndPayload(encodedJOSEHeader, encodedClaims, accessTokenKey)
 }
 
+// CheckPermissions TODO implement me
+func (a *AuthService) CheckPermissions(destination string, httpMethod string, subject string, roleString string) (bool, error) {
+	// right now this method authorises every request
+	return true, nil
+}
+
 const (
 	LessThanOnePeriodError              = "JWT token contains less than one period ('.') character"
 	WrongJWTTypeError                   = "JWT token should contain 3 parts: 1. JOSEHeader, 2. AccessTokenClaims, 3. Signature"
 	EmptyJWTPartsError                  = "JOSEHeader, AccessTokenClaims, Signature should not be empty strings"
 	IntegrityNotIntactError             = "JWT-Token was changed along the way"
 	SentNotFromOriginatingIdentityError = "tokens are sent from another system&program! Possible fraudulent activity"
-	IsExpired                           = "token is expired"
+	TokenIsExpiredError                 = "token is expired"
 )
 
 type JWTTokenValidator struct {
@@ -219,7 +236,7 @@ func (j *JWTTokenValidator) ValidateToken() {
 	encodedJOSEHeader, encodedClaims, encodedSignature := tokenParts[0], tokenParts[1], tokenParts[2]
 	// check if they are not nil strings
 	if encodedJOSEHeader == "" || encodedClaims == "" || encodedSignature == "" {
-		log.Println("pkg.JWT.ValidateJWT(): ", EmptyJWTPartsError, " Passed data: ", j.JWTTokenString)
+		log.Println("JWTTokenValidator: ", EmptyJWTPartsError, " Passed data: ", j.JWTTokenString)
 		j.ValidationError = errors.New(EmptyJWTPartsError)
 		return
 	}
@@ -227,7 +244,7 @@ func (j *JWTTokenValidator) ValidateToken() {
 	// verify the JOSE header and Message wasn't changed along the way
 	expectedSignature := pkg.SignHeaderAndPayload(encodedJOSEHeader, encodedClaims, accessTokenKey)
 	if expectedSignature != encodedSignature {
-		log.Println("pkg.JWT.ValidateJWT(): ", IntegrityNotIntactError, " Passed data: ", j.JWTTokenString)
+		log.Println("JWTTokenValidator: ", IntegrityNotIntactError, " Passed data: ", j.JWTTokenString)
 		j.ValidationError = errors.New(IntegrityNotIntactError)
 		return
 	}
@@ -235,7 +252,7 @@ func (j *JWTTokenValidator) ValidateToken() {
 	// 2. Let the Encoded JOSE JOSEHeader be the portion of the JWT before the first period ('.') character
 	joseHeader, joseHeaderExtractionError := pkg.ExtractJOSEHeader(encodedJOSEHeader)
 	if joseHeaderExtractionError != nil {
-		log.Println("pkg.JWT.ValidateJWT(): error during extraction of JOSE JOSEHeader. Details: ", joseHeaderExtractionError)
+		log.Println("JWTTokenValidator: error during extraction of JOSE JOSEHeader. Details: ", joseHeaderExtractionError)
 		j.ValidationError = joseHeaderExtractionError
 		return
 	}
@@ -245,7 +262,7 @@ func (j *JWTTokenValidator) ValidateToken() {
 	if j.tokenKey == accessTokenKey {
 		accessTokenClaims, claimsExtractionError := pkg.ExtractAccessTokenClaims(encodedClaims)
 		if claimsExtractionError != nil {
-			log.Println("pkg.JWT.ValidateJWT(): ", claimsExtractionError, " Passed data: ", encodedClaims)
+			log.Println("JWTTokenValidator: ", claimsExtractionError, " Passed data: ", encodedClaims)
 			j.ValidationError = claimsExtractionError
 			return
 		}
@@ -253,7 +270,7 @@ func (j *JWTTokenValidator) ValidateToken() {
 	} else {
 		refreshTokenClaims, claimsExtractionError := pkg.ExtractRefreshTokenClaims(encodedClaims)
 		if claimsExtractionError != nil {
-			log.Println("pkg.JWT.ValidateJWT(): ", claimsExtractionError, " Passed data: ", encodedClaims)
+			log.Println("JWTTokenValidator: ", claimsExtractionError, " Passed data: ", encodedClaims)
 			j.ValidationError = claimsExtractionError
 			return
 		}
@@ -271,14 +288,14 @@ func (j *JWTTokenValidator) ValidateToken() {
 		// check if not expired
 		accessTokenExpirationTime := time.Unix(int64(j.AccessTokenClaims.ExpirationTime), 0)
 		if accessTokenExpirationTime.Before(now) {
-			log.Println("pkg.JWT.ValidateJWT(): ", IsExpired, " Passed data: ", j.AccessTokenClaims)
+			log.Println("JWTTokenValidator: ", TokenIsExpiredError, " Passed data: ", j.AccessTokenClaims)
 			j.IsExpired = true
-			j.ValidationError = errors.New(IsExpired)
+			j.ValidationError = errors.New(TokenIsExpiredError)
 			return
 		}
 		// check if token came from original identity (same IP)
 		if j.AccessTokenClaims.OriginatingIdentity.IP != j.SentFromIdentity.IP {
-			log.Println("pkg.JWT.ValidateJWT(): ", SentNotFromOriginatingIdentityError, " Passed data: ", j.SentFromIdentity.IP)
+			log.Println("JWTTokenValidator: ", SentNotFromOriginatingIdentityError, " Passed data: ", j.SentFromIdentity.IP)
 			j.ValidationError = errors.New(SentNotFromOriginatingIdentityError)
 			return
 		}
@@ -286,14 +303,14 @@ func (j *JWTTokenValidator) ValidateToken() {
 		// check if not expired
 		refreshTokenExpirationTime := time.Unix(int64(j.RefreshTokenClaims.ExpirationTime), 0)
 		if refreshTokenExpirationTime.Before(now) {
-			log.Println("pkg.JWT.ValidateJWT(): ", IsExpired, " Passed data: ", j.RefreshTokenClaims)
+			log.Println("JWTTokenValidator: ", TokenIsExpiredError, " Passed data: ", j.RefreshTokenClaims)
 			j.IsExpired = true
-			j.ValidationError = errors.New(IsExpired)
+			j.ValidationError = errors.New(TokenIsExpiredError)
 			return
 		}
 		// check if token came from original identity (same IP)
 		if j.RefreshTokenClaims.OriginatingIdentity.IP != j.SentFromIdentity.IP {
-			log.Println("pkg.JWT.ValidateJWT(): ", SentNotFromOriginatingIdentityError, " Passed data: ", j.SentFromIdentity.IP)
+			log.Println("JWTTokenValidator: ", SentNotFromOriginatingIdentityError, " Passed data: ", j.SentFromIdentity.IP)
 			j.ValidationError = errors.New(SentNotFromOriginatingIdentityError)
 			return
 		}
