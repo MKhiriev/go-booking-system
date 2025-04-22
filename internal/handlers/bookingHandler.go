@@ -133,6 +133,9 @@ func (h *Handlers) GetBookingsByRoomIdAndBookingTime(w http.ResponseWriter, r *h
 }
 
 func (h *Handlers) UpdateBooking(w http.ResponseWriter, r *http.Request) {
+	// get booking_id from query path
+	_ = r.URL.Query().Get("booking_id")
+
 	var bookingParamsToUpdate models.Booking
 	// convert JSON to models.Booking type
 	err := json.NewDecoder(r.Body).Decode(&bookingParamsToUpdate)

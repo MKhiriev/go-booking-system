@@ -42,6 +42,9 @@ func (h *Handlers) GetUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	// get user_id from query path
+	_ = r.URL.Query().Get("user_id")
+
 	var userParamsToUpdate models.User
 	// convert JSON to models.User type
 	err := json.NewDecoder(r.Body).Decode(&userParamsToUpdate)

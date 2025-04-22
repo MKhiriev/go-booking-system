@@ -95,6 +95,9 @@ func (h *Handlers) GetRoomById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) UpdateRoom(w http.ResponseWriter, r *http.Request) {
+	// get room_id from query path
+	_ = r.URL.Query().Get("room_id")
+
 	var roomParamsToUpdate models.Room
 	// convert JSON to models.Room type
 	err := json.NewDecoder(r.Body).Decode(&roomParamsToUpdate)
