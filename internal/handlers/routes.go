@@ -22,7 +22,7 @@ func (h *Handlers) Init() *mux.Router {
 	auth := router.PathPrefix("/auth").Subrouter()
 	auth.HandleFunc("/register", h.Register).Methods(http.MethodPost, http.MethodOptions)
 	auth.HandleFunc("/login", h.Login).Methods(http.MethodPost, http.MethodOptions)
-	auth.HandleFunc("/refresh", h.RefreshToken).Methods(http.MethodGet, http.MethodOptions)
+	auth.HandleFunc("/refresh", h.RefreshToken).Methods(http.MethodPost, http.MethodOptions)
 
 	// User Handler
 	user := router.PathPrefix("/user").Subrouter()
@@ -49,6 +49,7 @@ func (h *Handlers) Init() *mux.Router {
 	booking.HandleFunc("/available/room", h.CheckIfRoomAvailable).Methods(http.MethodGet, http.MethodOptions)
 	booking.HandleFunc("/create", h.BookRoom).Methods(http.MethodPost, http.MethodOptions)
 	booking.HandleFunc("/overlapping", h.GetOverlappingBookings).Methods(http.MethodGet, http.MethodOptions)
+	booking.HandleFunc("/update", h.UpdateBooking).Methods(http.MethodPatch, http.MethodOptions)
 
 	return router
 }
