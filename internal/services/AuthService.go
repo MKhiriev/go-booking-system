@@ -222,11 +222,6 @@ func (a *AuthService) CheckPermissions(destination string, recordType string, re
 		log.Println("AuthService.CheckPermissions(): error occured during conversion from `subject` string to `UserId` integer")
 		return false, conversionError
 	}
-	recordId, conversionError := strconv.Atoi(recordString)
-	if conversionError != nil {
-		log.Println("AuthService.CheckPermissions(): error occured during conversion from `recordString` string to `recordId` integer")
-		return false, conversionError
-	}
 
 	// check if user has right to perform action over chosen record
 	for _, permission := range permissions {
@@ -235,8 +230,13 @@ func (a *AuthService) CheckPermissions(destination string, recordType string, re
 			return true, nil // then he has rights over all records - everything is ok
 		}
 		if permission.ScopeId == OwnerScopeId {
-			// TODO add to all READ/UPDATE/DELETE methods id value
+			recordId, conversionError := strconv.Atoi(recordString)
+			if conversionError != nil {
+				log.Println("AuthService.CheckPermissions(): error occured during conversion from `recordString` string to `recordId` integer")
+				return false, conversionError
+			}
 			isOwner, isOwnerError := a.CheckIfUserIsOwner(userId, recordType, recordId)
+			log.Printf("AuthService.CheckPermissions(): if permission.ScopeId == OwnerScopeId | IsUserOwner=%t userId=%d recordType=%s recordId=%d", isOwner, userId, recordType, recordId)
 			if isOwnerError != nil {
 				return false, isOwnerError
 			}
@@ -246,13 +246,19 @@ func (a *AuthService) CheckPermissions(destination string, recordType string, re
 		}
 	}
 
-	return true, nil
+	return false, nil
 }
 
-// CheckIfUserIsOwner TODO add CreatedBy column to all entities
 func (a *AuthService) CheckIfUserIsOwner(userId int, recordType string, idValue int) (bool, error) {
 	if recordType == "room" {
-		return true, nil
+		foundRoom, err := a.roomService.GetRoomById(idValue)
+		if err != nil {
+			return false, err
+		}
+		if foundRoom.CreatedBy == userId {
+			return true, nil
+		}
+		return false, nil
 	}
 	if recordType == "user" {
 		foundUser, err := a.userRepository.GetUserById(idValue)
@@ -262,15 +268,17 @@ func (a *AuthService) CheckIfUserIsOwner(userId int, recordType string, idValue 
 		if foundUser.UserId == userId {
 			return true, nil
 		}
+		return false, nil
 	}
 	if recordType == "booking" {
 		foundBooking, err := a.bookingService.GetBookingById(idValue)
 		if err != nil {
 			return false, err
 		}
-		if foundBooking.UserId == userId {
+		if foundBooking.CreatedBy == userId {
 			return true, nil
 		}
+		return false, nil
 	}
 	return false, nil
 }
