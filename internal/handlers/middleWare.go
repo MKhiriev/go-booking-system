@@ -62,8 +62,9 @@ func (h *Handlers) AuthorizationCheck(next http.Handler) http.Handler {
 		}
 
 		// if user wants to log in or register and header `authorization` should be empty => procceed to next.ServeHTTP(w, r)
-		if (destinationPathIsAuthLogin || destinationPathIsAuthRegister) && authorizationHeader == "" {
+		if destinationPathIsAuthLogin || destinationPathIsAuthRegister {
 			next.ServeHTTP(w, r)
+			return
 		}
 
 		ipAddress := strings.Split(r.RemoteAddr, ":")[0]
@@ -81,19 +82,18 @@ func (h *Handlers) AuthorizationCheck(next http.Handler) http.Handler {
 		roleString := validator.AccessTokenClaims.Role
 
 		var recordIdString string
-		var recordType string
 		if r.URL.Query().Has("booking_id") {
 			recordIdString = r.URL.Query().Get("booking_id")
-			recordType = "booking"
 		}
 		if r.URL.Query().Has("room_id") {
 			recordIdString = r.URL.Query().Get("room_id")
-			recordType = "room"
 		}
 		if r.URL.Query().Has("user_id") {
 			recordIdString = r.URL.Query().Get("user_id")
-			recordType = "user"
 		}
+
+		var recordType string
+		recordType = strings.Split(destination.Path, "/")[1]
 
 		// check for permission to
 		isAccessGranted, permissionCheckError := h.service.AuthService.CheckPermissions(destination.Path, recordType, recordIdString, subjectString, roleString)
