@@ -13,6 +13,7 @@ type Booking struct {
 	DateTimeEnd   time.Time `json:"datetime_end" gorm:"column:datetime_end"`
 
 	Active    bool      `json:"active"`
+	CreatedBy int       `json:"created_by"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at"`
