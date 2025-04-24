@@ -54,7 +54,7 @@ type AuthServiceInterface interface {
 
 type BookingServiceInterface interface {
 	CheckIfRoomAvailable(roomId int, dateTimeStart time.Time, dateTimeEnd time.Time) (bool, error)
-	BookRoom(userId int, roomId int, dateTimeStart time.Time, dateTimeEnd time.Time) (models.Booking, error)
+	BookRoom(userId int, roomId int, dateTimeStart time.Time, dateTimeEnd time.Time, createdBy int) (models.Booking, error)
 	GetAll() []models.Booking
 	GetBookingById(bookingId int) (models.Booking, error)
 	GetBookingsByRoomId(roomId int) ([]models.Booking, error)

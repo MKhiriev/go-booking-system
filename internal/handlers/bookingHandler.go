@@ -7,42 +7,53 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
 func (h *Handlers) BookRoom(w http.ResponseWriter, r *http.Request) {
+	subjectStr := r.Header.Get("subject")
+	r.Header.Del("subject")
+	subjectWhoCreatesBooking, conversionError := strconv.Atoi(subjectStr)
+	if conversionError != nil {
+		log.Println("BookingHandler.BookRoom(): cannot convert `subject`-header to integer. Details: ", conversionError)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "cannot convert `subject`-header to integer", conversionError.Error())
+		return
+	}
+
 	var bookingParamsToCreate models.Booking
 	// convert JSON to models.Booking type
 	err := json.NewDecoder(r.Body).Decode(&bookingParamsToCreate)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.BookRoom(): cannot convert JSON to models.Booking struct", err.Error())
+		log.Println("BookingHandler.BookRoom(): cannot convert JSON to models.Booking struct. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "cannot convert JSON to models.Booking struct", err.Error())
 		return
 	}
 
 	// validate passed booking data
 	validator := NewBookingValidator(&bookingParamsToCreate)
 	if validator.AllBookingFieldsValid != true {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.BookRoom(): Booking data is not valid!", validator)
+		log.Println("BookingHandler.BookRoom(): booking data is not valid. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking data is not valid", validator)
 		return
 	}
 
-	// update booking
-	updatedBooking, err := h.service.BookingService.BookRoom(
+	// create booking
+	createdBooking, err := h.service.BookingService.BookRoom(
 		bookingParamsToCreate.UserId,
 		bookingParamsToCreate.RoomId,
 		bookingParamsToCreate.DateTimeStart,
 		bookingParamsToCreate.DateTimeEnd,
+		subjectWhoCreatesBooking,
 	)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.BookRoom(): error occured", err.Error())
+		log.Println("BookingHandler.BookRoom(): error occured during Room Booking. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during Room Booking", err.Error())
 		return
 	}
 
-	// return updated booking
-	pkg.Response(w, updatedBooking)
+	// return created booking
+	pkg.Response(w, createdBooking)
 }
 
 func (h *Handlers) GetAllBookings(w http.ResponseWriter, r *http.Request) {
@@ -56,19 +67,24 @@ func (h *Handlers) GetAllBookings(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetBookingById(w http.ResponseWriter, r *http.Request) {
 	// get booking_id from query path
 	bookingIdStr := r.URL.Query().Get("booking_id")
+	if bookingIdStr == "" {
+		log.Println("BookingHandler.GetBookingById(): parameter `room_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `room_id` is empty or not passed")
+		return
+	}
 	// convert booking_id param string to int
 	bookingId, err := strconv.Atoi(bookingIdStr)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.GetBookingById(): booking_id should be an integer!", err.Error())
+		log.Println("BookingHandler.GetBookingById(): booking_id should be an integer. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking_id should be an integer", err.Error())
 		return
 	}
 
 	// get Booking from services
 	booking, err := h.service.BookingService.GetBookingById(bookingId)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.GetBookingById(): error occured", err.Error())
+		log.Println("BookingHandler.GetBookingById(): error occured during getting booking by id. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during getting booking by id", err.Error())
 		return
 	}
 
@@ -78,53 +94,49 @@ func (h *Handlers) GetBookingById(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) GetBookingsByRoomId(w http.ResponseWriter, r *http.Request) {
 	// get room_id from query path
-	bookingIdStr := r.URL.Query().Get("room_id")
+	roomIdStr := r.URL.Query().Get("room_id")
+	if roomIdStr == "" {
+		log.Println("BookingHandler.GetBookingsByRoomId(): parameter `room_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `room_id` is empty or not passed")
+		return
+	}
+
 	// convert room_id param string to int
-	bookingId, err := strconv.Atoi(bookingIdStr)
+	roomId, err := strconv.Atoi(roomIdStr)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.GetBookingsByRoomId(): room_id should be an integer!", err.Error())
+		log.Println("BookingHandler.GetBookingsByRoomId(): room_id should be an integer. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "room_id should be an integer", err.Error())
 		return
 	}
 
 	// get Booking slice from services
-	bookings, err := h.service.BookingService.GetBookingsByRoomId(bookingId)
+	foundBooking, err := h.service.BookingService.GetBookingsByRoomId(roomId)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.GetBookingsByRoomId(): error occured", err.Error())
+		log.Println("BookingHandler.GetBookingsByRoomId(): error occured during getting booking by room id. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during getting booking by room id", err.Error())
 		return
 	}
 
 	// return found booking
-	pkg.Response(w, bookings)
+	pkg.Response(w, foundBooking)
 }
 
 func (h *Handlers) GetBookingsByRoomIdAndBookingTime(w http.ResponseWriter, r *http.Request) {
-	// get room_id, datetime_start, datetime_end from query path
-	roomIdStr := r.URL.Query().Get("room_id")
-	dateTimeStartStr := r.URL.Query().Get("datetime_start")
-	dateTimeEndStr := r.URL.Query().Get("datetime_end")
-
 	// validate params
-	validator := NewBookingQueryValidator(map[string]string{
-		"room_id":        roomIdStr,
-		"datetime_start": dateTimeStartStr,
-		"datetime_end":   dateTimeEndStr,
-	})
+	validator := NewBookingQueryParamsValidator(r.URL.RawQuery)
 
-	if validator.AllBookingParamsValid == false {
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.GetBookingsByRoomIdAndBookingTime(): Booking data is not valid!", validator)
+	if validator.AllQueryParamsValid == false {
+		log.Println("BookingHandler.GetBookingsByRoomIdAndBookingTime(): booking query is not valid. Details: ", validator.ValidationErrors)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking query is not valid", validator.ValidationErrors)
 		return
 	}
 
-	// convert VALIDATED params: room_id to int, datetime_start and datetime_end to time.Time
-	roomId, dateTimeStart, dateTimeEnd := convertRoomIdAndDateTimeRange(roomIdStr, dateTimeStartStr, dateTimeEndStr)
-
+	roomId, dateTimeStart, dateTimeEnd := validator.RoomId, validator.DateTimeStart, validator.DateTimeEnd
 	// get Booking slice from services
 	bookings, err := h.service.BookingService.GetBookingsByRoomIdAndBookingTime(roomId, dateTimeStart, dateTimeEnd)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.GetBookingsByRoomId(): error occured", err.Error())
+		log.Println("BookingHandler.GetBookingsByRoomIdAndBookingTime(): error occured during getting bookings by room id and booking time. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during getting bookings by room id and booking time", err.Error())
 		return
 	}
 
@@ -134,30 +146,46 @@ func (h *Handlers) GetBookingsByRoomIdAndBookingTime(w http.ResponseWriter, r *h
 
 func (h *Handlers) UpdateBooking(w http.ResponseWriter, r *http.Request) {
 	// get booking_id from query path
-	_ = r.URL.Query().Get("booking_id")
+	bookingIdStr := r.URL.Query().Get("booking_id")
+	if bookingIdStr == "" {
+		log.Println("BookingHandler.UpdateBooking(): parameter `room_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `room_id` is empty or not passed")
+		return
+	}
+
+	// convert room_id param string to int
+	bookingId, err := strconv.Atoi(bookingIdStr)
+	if err != nil {
+		log.Println("BookingHandler.UpdateBooking(): room_id should be an integer. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "room_id should be an integer", err.Error())
+		return
+	}
 
 	var bookingParamsToUpdate models.Booking
 	// convert JSON to models.Booking type
-	err := json.NewDecoder(r.Body).Decode(&bookingParamsToUpdate)
-	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.UpdateBooking(): cannot convert JSON to models.Booking struct", err.Error())
+	jsonConversionErr := json.NewDecoder(r.Body).Decode(&bookingParamsToUpdate)
+	if jsonConversionErr != nil {
+		log.Println("BookingHandler.UpdateBooking(): cannot convert JSON to models.Booking struct. Details: ", jsonConversionErr)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "cannot convert JSON to models.Booking struct", jsonConversionErr.Error())
 		return
 	}
 
 	// validate passed booking data
 	validator := NewBookingValidator(&bookingParamsToUpdate)
 	if validator.AllBookingFieldsValid != true {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.UpdateBooking(): Booking data is not valid!", validator)
+		log.Println("BookingHandler.UpdateBooking(): Booking data is not valid. Details: ", validator.ValidationErrors)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "Booking data is not valid", validator.ValidationErrors)
 		return
 	}
+
+	// to double-check if booking id wasn't set
+	bookingParamsToUpdate.BookingId = bookingId
 
 	// update booking
 	updatedBooking, err := h.service.BookingService.Update(bookingParamsToUpdate)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.Update(): error occured", err.Error())
+		log.Println("BookingHandler.UpdateBooking(): error occured during booking update. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during booking update", err.Error())
 		return
 	}
 
@@ -167,19 +195,26 @@ func (h *Handlers) UpdateBooking(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) DeleteBookings(w http.ResponseWriter, r *http.Request) {
 	// get booking_id string from query
-	id := r.URL.Query().Get("booking_id")
+	bookingIdStr := r.URL.Query().Get("booking_id")
+	if bookingIdStr == "" {
+		log.Println("BookingHandler.DeleteBookings(): parameter `room_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `room_id` is empty or not passed")
+		return
+	}
+
 	// convert booking_id string to int
-	bookingId, err := strconv.Atoi(id)
+	bookingId, err := strconv.Atoi(bookingIdStr)
 	if err != nil {
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.DeleteBookings(): Booking data is not valid!", err.Error())
+		log.Println("BookingHandler.DeleteBookings(): booking data is not valid. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking data is not valid", err.Error())
 		return
 	}
 
 	// delete Booking
 	_, err = h.service.BookingService.Delete(bookingId)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.Delete(): error occured", err.Error())
+		log.Println("BookingHandler.DeleteBookings(): error occured during booking deletion. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during booking deletion", err.Error())
 		return
 	}
 
@@ -187,31 +222,23 @@ func (h *Handlers) DeleteBookings(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) CheckIfRoomAvailable(w http.ResponseWriter, r *http.Request) {
-	// get room_id, datetime_start, datetime_end from query path
-	roomIdStr := r.URL.Query().Get("room_id")
-	dateTimeStartStr := r.URL.Query().Get("datetime_start")
-	dateTimeEndStr := r.URL.Query().Get("datetime_end")
-
 	// validate params
-	validator := NewBookingQueryValidator(map[string]string{
-		"room_id":        roomIdStr,
-		"datetime_start": dateTimeStartStr,
-		"datetime_end":   dateTimeEndStr,
-	})
+	validator := NewBookingQueryParamsValidator(r.URL.RawQuery)
 
-	if validator.AllBookingParamsValid == false {
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.GetOverlappingBookings(): Booking data is not valid!", validator)
+	if validator.AllQueryParamsValid == false {
+		log.Println("BookingHandler.CheckIfRoomAvailable(): booking query is not valid. Details: ", validator.ValidationErrors)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking query is not valid", validator.ValidationErrors)
 		return
 	}
 
 	// convert VALIDATED params: room_id to int, datetime_start and datetime_end to time.Time
-	roomId, dateTimeStart, dateTimeEnd := convertRoomIdAndDateTimeRange(roomIdStr, dateTimeStartStr, dateTimeEndStr)
+	roomId, dateTimeStart, dateTimeEnd := validator.RoomId, validator.DateTimeStart, validator.DateTimeEnd
 
 	// get result is room available during given time frame
 	available, err := h.service.BookingService.CheckIfRoomAvailable(roomId, dateTimeStart, dateTimeEnd)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.GetBookingsByRoomIdAndBookingTime(): error occured", err.Error())
+		log.Println("BookingHandler.CheckIfRoomAvailable(): error occured during room availability check. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during room availability check", err.Error())
 		return
 	}
 
@@ -220,31 +247,23 @@ func (h *Handlers) CheckIfRoomAvailable(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *Handlers) GetOverlappingBookings(w http.ResponseWriter, r *http.Request) {
-	// get room_id, datetime_start, datetime_end from query path
-	roomIdStr := r.URL.Query().Get("room_id")
-	dateTimeStartStr := r.URL.Query().Get("datetime_start")
-	dateTimeEndStr := r.URL.Query().Get("datetime_end")
-
 	// validate params
-	validator := NewBookingQueryValidator(map[string]string{
-		"room_id":        roomIdStr,
-		"datetime_start": dateTimeStartStr,
-		"datetime_end":   dateTimeEndStr,
-	})
+	validator := NewBookingQueryParamsValidator(r.URL.RawQuery)
 
-	if validator.AllBookingParamsValid == false {
-		pkg.ErrorResponse(w, http.StatusBadRequest, "BookingHandler.GetOverlappingBookings(): Booking data is not valid!", validator)
+	if validator.AllQueryParamsValid == false {
+		log.Println("BookingHandler.GetOverlappingBookings(): booking query is not valid. Details: ", validator.ValidationErrors)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking query is not valid", validator.ValidationErrors)
 		return
 	}
 
 	// convert VALIDATED params: room_id to int, datetime_start and datetime_end to time.Time
-	roomId, dateTimeStart, dateTimeEnd := convertRoomIdAndDateTimeRange(roomIdStr, dateTimeStartStr, dateTimeEndStr)
+	roomId, dateTimeStart, dateTimeEnd := validator.RoomId, validator.DateTimeStart, validator.DateTimeEnd
 
 	// get Booking slice from services
 	bookings, err := h.service.BookingService.GetBookingsByRoomIdAndBookingTime(roomId, dateTimeStart, dateTimeEnd)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "BookingService.GetBookingsByRoomIdAndBookingTime(): error occured", err.Error())
+		log.Println("BookingHandler.GetOverlappingBookings(): error occured during getting overlapping bookings. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during getting overlapping bookings", err.Error())
 		return
 	}
 
@@ -303,125 +322,69 @@ func (b *BookingValidator) ValidateFields() {
 	}
 }
 
-type BookingQueryValidator struct {
-	BookingQueryParams    map[string]string `json:"booking_query"`
-	ValidationErrors      map[string]string `json:"validation_errors"`
-	ParamsToValidate      map[string]bool   `json:"params_to_validate"`
-	IsUserIdValid         bool              `json:"is_userid_valid"`
-	IsRoomIdValid         bool              `json:"is_roleid_valid"`
-	IsDateTimeStartValid  bool              `json:"is_datetime_start_valid"`
-	IsDateTimeEndValid    bool              `json:"is_datetime_end_valid"`
-	AllBookingParamsValid bool              `json:"all_booking_params_valid"`
+type BookingQueryParamsValidator struct {
+	RawQueryParamsString string            `json:"raw_query_params_string"`
+	QueryParams          map[string]string `json:"query_params"`
+
+	RoomId        int       `json:"room_id"`
+	DateTimeStart time.Time `json:"datetime_start"`
+	DateTimeEnd   time.Time `json:"datetime_end"`
+
+	ValidationErrors    map[string]string `json:"validation_errors"`
+	AllQueryParamsValid bool              `json:"all_login_fields_valid"`
 }
 
-func NewBookingQueryValidator(bookingQueryParams map[string]string, fieldsToValidate ...string) *BookingQueryValidator {
-	validationErrors := map[string]string{
-		"user_id":        "user_id should be integer greater than zero",
-		"room_id":        "room_id should be integer greater than zero",
-		"datetime_start": "datetime_start: wrong format or empty string",
-		"datetime_end":   "datetime_end: wrong format or empty string",
-	}
-	allParamsToValidate := map[string]bool{
-		"user_id":        false,
-		"room_id":        false,
-		"datetime_start": false,
-		"datetime_end":   false,
-	}
-
-	validator := &BookingQueryValidator{
-		BookingQueryParams:    bookingQueryParams,
-		ValidationErrors:      validationErrors,
-		ParamsToValidate:      allParamsToValidate,
-		AllBookingParamsValid: false,
-	}
-
-	if len(fieldsToValidate) != 0 {
-		newParamsToValidate := validator.deleteUnneccessaryParams(fieldsToValidate)
-		validator.ParamsToValidate = newParamsToValidate
-	}
-
-	validator.IsBookingQueryValid()
+func NewBookingQueryParamsValidator(rawQueryParamsString string) *BookingQueryParamsValidator {
+	validator := &BookingQueryParamsValidator{RawQueryParamsString: rawQueryParamsString, QueryParams: make(map[string]string), AllQueryParamsValid: false}
+	validator.AreParamsValid()
 
 	return validator
 }
 
-func (b *BookingQueryValidator) deleteUnneccessaryParams(fieldsToCheck []string) map[string]bool {
-	result := make(map[string]bool, 4)
-	allNeccessaryFields := b.ParamsToValidate
-	// check if in LIST OF INPUT FIELDS only neccessary fields are present
-	// iterate over fields to check
-	for _, fieldToCheck := range fieldsToCheck {
-		// for each field to check
-		// iterate over all neccessary fields
-		for neccessaryField := range allNeccessaryFields {
-			// if fieldToCheck == necessaryField => append fieldToCheck to result and go to the next iteration of inner for loop
-			// else do nothing
-			if fieldToCheck == neccessaryField {
-				result[fieldToCheck] = false
-				delete(b.ValidationErrors, fieldToCheck)
-				continue
-			}
-		}
-	}
-
-	return result
-}
-
-func (b *BookingQueryValidator) IsBookingQueryValid() {
-	areValid := true
+func (b *BookingQueryParamsValidator) AreParamsValid() {
 	b.ValidateParams()
 
-	for _, isParamValid := range b.ParamsToValidate {
-		areValid = areValid && isParamValid
+	if len(b.ValidationErrors) == 0 {
+		b.AllQueryParamsValid = true
 	}
-
-	b.AllBookingParamsValid = areValid
 }
 
-func (b *BookingQueryValidator) ValidateParams() {
-	layout := "2006-01-02 15:04:05 Z0700"
-	for field := range b.ParamsToValidate {
-		if field == "user_id" {
-			userId, userIdErr := strconv.Atoi(b.BookingQueryParams["user_id"])
+func (b *BookingQueryParamsValidator) ValidateParams() {
+	if b.RawQueryParamsString == "" {
+		b.ValidationErrors["empty_params_query_error"] = "no parameters have been passed"
+		return
+	}
 
-			if userIdErr == nil && userId > 0 {
-				b.IsUserIdValid = true
-				b.ParamsToValidate[field] = true
-				delete(b.ValidationErrors, "roomid_error")
-			}
-		} else if field == "room_id" {
-			roomId, roomIdErr := strconv.Atoi(b.BookingQueryParams["room_id"])
+	queryParams := strings.Split(b.RawQueryParamsString, "&")
+	for _, queryParam := range queryParams {
+		paramValuePair := strings.Split(queryParam, "=")
+		param := paramValuePair[0]
+		value := paramValuePair[1]
+		b.QueryParams[param] = value
+	}
 
-			if roomIdErr == nil && roomId > 0 {
-				b.IsRoomIdValid = true
-				b.ParamsToValidate[field] = true
-				delete(b.ValidationErrors, "room_id")
-			}
-		} else if field == "datetime_start" {
-			dateTimeStart, dateTimeStartErr := time.Parse(layout, b.BookingQueryParams["datetime_start"])
-
-			if dateTimeStartErr == nil && !dateTimeStart.IsZero() {
-				b.IsUserIdValid = true
-				b.ParamsToValidate[field] = true
-				delete(b.ValidationErrors, "datetime_start_error")
-			}
-		} else if field == "datetime_end" {
-			dateTimeEnd, dateTimeEndErr := time.Parse(layout, b.BookingQueryParams["datetime_end"])
-
-			if dateTimeEndErr == nil && !dateTimeEnd.IsZero() {
-				b.IsDateTimeEndValid = true
-				b.ParamsToValidate[field] = true
-				delete(b.ValidationErrors, "datetime_end_error")
-			}
+	if roomIdStr, ok := b.QueryParams["room_id"]; ok == true {
+		roomId, conversionError := strconv.Atoi(roomIdStr)
+		if conversionError != nil || roomId < 1 {
+			b.ValidationErrors["roomId_error"] = "should not be negative integer or zero"
 		}
+		b.RoomId = roomId
 	}
-}
 
-func convertRoomIdAndDateTimeRange(roomIdStr string, dateTimeStartStr string, dateTimeEndStr string) (int, time.Time, time.Time) {
-	layout := "2006-01-02 15:04:05 Z0700"
-	roomId, _ := strconv.Atoi(roomIdStr)
-	dateTimeStart, _ := time.Parse(layout, dateTimeStartStr)
-	dateTimeEnd, _ := time.Parse(layout, dateTimeEndStr)
+	emptyTime := time.Time{}
+	if dateTimeStartStr, ok := b.QueryParams["datetime_start"]; ok == true {
+		dateTimeStart, timeConversionError := time.Parse(time.RFC3339, dateTimeStartStr)
+		if timeConversionError != nil || dateTimeStart == emptyTime {
+			b.ValidationErrors["datetime_start"] = "wrong DateTime format"
+		}
+		b.DateTimeStart = dateTimeStart
+	}
 
-	return roomId, dateTimeStart, dateTimeEnd
+	if dateTimeEndStr, ok := b.QueryParams["datetime_end"]; ok == true {
+		dateTimeEnd, timeConversionError := time.Parse(time.RFC3339, dateTimeEndStr)
+		if timeConversionError != nil || dateTimeEnd == emptyTime {
+			b.ValidationErrors["datetime_end"] = "wrong DateTime format"
+		}
+		b.DateTimeEnd = dateTimeEnd
+	}
 }

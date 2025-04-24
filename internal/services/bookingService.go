@@ -98,12 +98,13 @@ func (b *BookingService) CheckIfRoomAvailable(roomId int, dateTimeStart time.Tim
 	}
 }
 
-func (b *BookingService) BookRoom(userId int, roomId int, dateTimeStart time.Time, dateTimeEnd time.Time) (models.Booking, error) {
+func (b *BookingService) BookRoom(userId int, roomId int, dateTimeStart time.Time, dateTimeEnd time.Time, createdBy int) (models.Booking, error) {
 	bookingToCreate := models.Booking{
 		UserId:        userId,
 		RoomId:        roomId,
 		DateTimeStart: dateTimeStart,
 		DateTimeEnd:   dateTimeEnd,
+		CreatedBy:     createdBy,
 	}
 
 	// 1. Check if it is possible to book Room in the given timeframe [start; end]
@@ -116,7 +117,7 @@ func (b *BookingService) BookRoom(userId int, roomId int, dateTimeStart time.Tim
 		return b.repository.Create(bookingToCreate)
 	}
 
-	return models.Booking{}, fmt.Errorf("error: BookingService.BookRoom() ended with an error. Passed data: %v", bookingToCreate)
+	return models.Booking{}, fmt.Errorf("room booking ended with an error. Passed data: %v", bookingToCreate)
 }
 
 func (b *BookingService) GetOverlappingBookings(roomId int, dateTimeStart time.Time, dateTimeEnd time.Time) ([]models.Booking, error) {

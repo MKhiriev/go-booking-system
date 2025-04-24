@@ -109,6 +109,9 @@ func (h *Handlers) AuthorizationCheck(next http.Handler) http.Handler {
 			return
 		}
 
+		// write subject(user_id) for filling `CreatedBy` field during record creation
+		r.Header.Add("subject", subjectString)
+
 		next.ServeHTTP(w, r)
 	})
 }
