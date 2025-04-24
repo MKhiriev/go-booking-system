@@ -68,8 +68,8 @@ func (h *Handlers) GetBookingById(w http.ResponseWriter, r *http.Request) {
 	// get booking_id from query path
 	bookingIdStr := r.URL.Query().Get("booking_id")
 	if bookingIdStr == "" {
-		log.Println("BookingHandler.GetBookingById(): parameter `room_id` is empty or not passed")
-		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `room_id` is empty or not passed")
+		log.Println("BookingHandler.GetBookingById(): parameter `booking_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `booking_id` is empty or not passed")
 		return
 	}
 	// convert booking_id param string to int
@@ -148,16 +148,16 @@ func (h *Handlers) UpdateBooking(w http.ResponseWriter, r *http.Request) {
 	// get booking_id from query path
 	bookingIdStr := r.URL.Query().Get("booking_id")
 	if bookingIdStr == "" {
-		log.Println("BookingHandler.UpdateBooking(): parameter `room_id` is empty or not passed")
-		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `room_id` is empty or not passed")
+		log.Println("BookingHandler.UpdateBooking(): parameter `booking_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `booking_id` is empty or not passed")
 		return
 	}
 
-	// convert room_id param string to int
+	// convert booking_id param string to int
 	bookingId, err := strconv.Atoi(bookingIdStr)
 	if err != nil {
-		log.Println("BookingHandler.UpdateBooking(): room_id should be an integer. Details: ", err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "room_id should be an integer", err.Error())
+		log.Println("BookingHandler.UpdateBooking(): booking_id should be an integer. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking_id should be an integer", err.Error())
 		return
 	}
 
@@ -197,8 +197,8 @@ func (h *Handlers) DeleteBookings(w http.ResponseWriter, r *http.Request) {
 	// get booking_id string from query
 	bookingIdStr := r.URL.Query().Get("booking_id")
 	if bookingIdStr == "" {
-		log.Println("BookingHandler.DeleteBookings(): parameter `room_id` is empty or not passed")
-		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `room_id` is empty or not passed")
+		log.Println("BookingHandler.DeleteBookings(): parameter `booking_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `booking_id` is empty or not passed")
 		return
 	}
 
