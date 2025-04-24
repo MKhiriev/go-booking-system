@@ -213,8 +213,8 @@ func (a *AuthService) CheckPermissions(destination string, recordType string, re
 
 	// check if no permissions were found
 	if len(permissions) == 0 {
-		log.Printf("AuthService.CheckPermissions(): no permissions has been found by RoleId and RouteId. Passed data: RoleId=%d RouteId=%d", roleId, route.RouteId)
-		return false, errors.New("no permissions has been found. Access denied")
+		log.Printf("AuthService.CheckPermissions(): no permission has been found by RoleId and RouteId. Passed data: RoleId=%d RouteId=%d", roleId, route.RouteId)
+		return false, errors.New("no permission has been found - access denied")
 	}
 
 	userId, conversionError := strconv.Atoi(subject)
@@ -347,7 +347,7 @@ func (j *JWTTokenValidator) ValidateToken() {
 	}
 
 	// verify the JOSE header and Message wasn't changed along the way
-	expectedSignature := pkg.SignHeaderAndPayload(encodedJOSEHeader, encodedClaims, accessTokenKey)
+	expectedSignature := pkg.SignHeaderAndPayload(encodedJOSEHeader, encodedClaims, j.tokenKey)
 	if expectedSignature != encodedSignature {
 		log.Println("JWTTokenValidator: ", IntegrityNotIntactError, " Passed data: ", j.JWTTokenString)
 		j.ValidationError = errors.New(IntegrityNotIntactError)
@@ -372,7 +372,7 @@ func (j *JWTTokenValidator) ValidateToken() {
 			return
 		}
 		j.AccessTokenClaims = accessTokenClaims
-	} else {
+	} else if j.tokenKey == refreshTokenKey {
 		refreshTokenClaims, claimsExtractionError := pkg.ExtractRefreshTokenClaims(encodedClaims)
 		if claimsExtractionError != nil {
 			log.Println("JWTTokenValidator: ", claimsExtractionError, " Passed data: ", encodedClaims)

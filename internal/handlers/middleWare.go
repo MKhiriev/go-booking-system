@@ -51,9 +51,9 @@ func (h *Handlers) AuthorizationCheck(next http.Handler) http.Handler {
 
 		// if user want to refresh tokens => check if authorization header is not empty - success
 		if destinationPathIsAuthRefresh {
-			// check if autorization header is not empty => procceed to next.ServeHTTP(w, r)
 			if authorizationHeader != "" {
 				next.ServeHTTP(w, r)
+				return
 			} else {
 				log.Println("MiddleWare.AuthorizationCheck(`/auth/refresh`): error occured before token refreshment: `Authorization` header is empty")
 				pkg.ErrorResponse(w, http.StatusBadRequest, "error occured before token refreshment", "`Authorization` header is empty")
