@@ -18,6 +18,7 @@ func NewRoomRepositoryPostgres(connection *gorm.DB) *RoomRepository {
 func (r *RoomRepository) Create(room models.Room) (models.Room, error) {
 	result := r.connection.
 		Omit("updated_at", "deleted_at").
+		Select("number", "capacity", "created_by").
 		Create(&room)
 
 	if err := result.Error; err != nil {
