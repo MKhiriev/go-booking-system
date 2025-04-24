@@ -17,17 +17,17 @@ ALTER TABLE roles
 UPDATE roles SET created_by = 1
 WHERE role_id != 0;
 
-INSERT INTO rooms (room_id, number, capacity, created_by)
-VALUES (1, 'Conference room #1', 20, 1),
-       (2, 'Conference room #2', 10, 1),
-       (3, 'Conference room #3', 5, 1),
-       (4, 'Interrogation room', 2, 1),
-       (5, 'Sauna', 8, 1);
+INSERT INTO rooms (number, capacity, created_by)
+VALUES ('Conference room #1', 20, 1),
+       ('Conference room #2', 10, 1),
+       ('Conference room #3', 5, 1),
+       ('Interrogation room', 2, 1),
+       ('Sauna', 8, 1);
 
-INSERT INTO bookings (booking_id, user_id, room_id, datetime_start, datetime_end, created_by)
-VALUES (1, 3, 1, '2025-04-23 13:00:00.00'::timestamp with time zone, '2025-04-23 14:00:00.00'::timestamp with time zone, 3), -- booking of room 'Conference room #1' by `HR` 13:00-14:00
-       (2, 5, 1, '2025-04-23 15:00:00.00'::timestamp with time zone, '2025-04-23 16:00:00.00'::timestamp with time zone, 5), -- booking of room 'Conference room #1' by `Sam Sepiol` 15:00-16:00
-       (3, 5, 5, '2025-04-23 10:00:00.00'::timestamp with time zone, '2025-04-23 13:00:00.00'::timestamp with time zone, 5); -- booking of room 'Sauna' by `Sam Sepiol` 10:00-13:00
+INSERT INTO bookings (user_id, room_id, datetime_start, datetime_end, created_by)
+VALUES (3, 1, '2025-04-23 13:00:00.00'::timestamp with time zone, '2025-04-23 14:00:00.00'::timestamp with time zone, 3), -- booking of room 'Conference room #1' by `HR` 13:00-14:00
+       (5, 1, '2025-04-23 15:00:00.00'::timestamp with time zone, '2025-04-23 16:00:00.00'::timestamp with time zone, 5), -- booking of room 'Conference room #1' by `Sam Sepiol` 15:00-16:00
+       (5, 5, '2025-04-23 10:00:00.00'::timestamp with time zone, '2025-04-23 13:00:00.00'::timestamp with time zone, 5); -- booking of room 'Sauna' by `Sam Sepiol` 10:00-13:00
 
 INSERT INTO scopes (scope_id, name, description)
 VALUES (1, 'ALL', 'Read/Update/Delete All records'),
@@ -61,7 +61,7 @@ VALUES (1, '/auth/register', 'Register new User. All unathorized users can do th
 
 INSERT INTO permissions (role_id, route_id, scope_id, created_by)
 VALUES
---     SUPER ADMIN
+--     SUPER ADMIN - all permissions
     -- AUTH
     (1, 1, 1, 1), -- Register new User
     (1, 2, 1, 1), -- Log in as a registered User
@@ -95,13 +95,13 @@ VALUES
     (2, 4, 1, 1), -- Get User by id
     (2, 5, 1, 1), -- Get all Users
     (2, 6, 2, 1), -- Update User by Id (only himself)
-    -- ROOMS
+    -- ROOMS - ADMIN
     (2, 8, 1, 1), -- Get Room by id
     (2, 9, 1, 1), -- Create Room
     (2, 10, 1, 1), -- Get all Rooms
     (2, 11, 1, 1), -- Update Room by Id
     (2, 12, 1, 1), -- Delete Room by Id
-    -- BOOKINGS
+    -- BOOKINGS - ADMIN
     (2, 13, 1, 1), -- Get Booking by id
     (2, 14, 1, 1), -- Get all Bookings
     (2, 15, 1, 1), -- Get Bookings by RoomId
@@ -116,7 +116,7 @@ VALUES
     -- AUTH
     (3, 1, 1, 1), -- Register new User
     (3, 3, 1, 1), -- Refresh access&refresh token
-    -- USERS
+    -- USERS - ADMIN
     (3, 4, 1, 1), -- Get User by id
     (3, 5, 1, 1), -- Get all Users
     (3, 6, 1, 1), -- Update User by Id
@@ -126,6 +126,7 @@ VALUES
     (3, 10, 1, 1), -- get all rooms
     -- BOOKINGS
     (3, 13, 1, 1), -- Get Booking by id
+    (3, 14, 1, 1), -- Get all Bookings
     (3, 15, 1, 1), -- Get Bookings by RoomId
     (3, 16, 1, 1), -- Get Bookings by RoomId and Booking time range
     (3, 17, 2, 1), -- Delete booking by id (only created by himself)
@@ -139,12 +140,12 @@ VALUES
     (4, 3, 1, 1), -- Refresh access&refresh token
     -- USERS
     (4, 4, 1, 1), -- Get User by id
-    (3, 5, 1, 1), -- Get all Users
+    (4, 5, 1, 1), -- Get all Users
     (4, 6, 2, 1), -- Update User by Id (only created by himself)
     -- ROOMS
     (4, 8, 1, 1), -- Get Room by id
     (4, 10, 1, 1), -- Get all Rooms
-    -- BOOKINGS
+    -- BOOKINGS - ADMIN
     (4, 13, 1, 1), -- Get Booking by id
     (4, 14, 1, 1), -- Get all Bookings
     (4, 15, 1, 1), -- Get Bookings by RoomId
@@ -160,13 +161,14 @@ VALUES
     (5, 3, 1, 1), -- Refresh access&refresh token
     -- USERS
     (5, 4, 1, 1), -- Get User by id
-    (3, 5, 1, 1), -- Get all Users
-    (5, 6, 2, 1), -- Update User by Id
+    (5, 5, 1, 1), -- Get all Users
+    (5, 6, 2, 1), -- Update User by Id (only himself)
     -- ROOMS
     (5, 8, 1, 1), -- Get Room by id
     (5, 10, 1, 1), -- Get all Rooms
     -- BOOKINGS
     (5, 13, 1, 1), -- Get Booking by id
+    (5, 14, 1, 1), -- Get all Bookings
     (5, 15, 1, 1), -- Get Bookings by RoomId
     (5, 16, 1, 1), -- Get Bookings by RoomId and Booking time range
     (5, 17, 2, 1), -- Delete booking by id  (only created by himself)
