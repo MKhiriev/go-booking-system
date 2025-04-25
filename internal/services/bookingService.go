@@ -63,7 +63,7 @@ func (b *BookingService) Update(booking models.Booking) (models.Booking, error) 
 		return models.Booking{}, err
 	}
 
-	return models.Booking{}, fmt.Errorf("booking cannot be updated. Reason: overlaps with existing bookings.\n %v", overlappingBookings)
+	return models.Booking{}, NewOverlappingBookingsError("cannot update booking. Overlapping bookings exist.", overlappingBookings)
 }
 
 func (b *BookingService) Delete(bookingId int) (bool, error) {
@@ -94,7 +94,7 @@ func (b *BookingService) CheckIfRoomAvailable(roomId int, dateTimeStart time.Tim
 	if isOverlapping == false {
 		return RoomIsAvailable, nil
 	} else {
-		return RoomIsNotAvailable, nil
+		return RoomIsNotAvailable, NewOverlappingBookingsError("Room is not available", overlappingBookings)
 	}
 }
 
@@ -174,4 +174,17 @@ func (b *BookingService) SortBookings(bookings ...models.Booking) []models.Booki
 			((b1.DateTimeStart == b2.DateTimeStart) && (b1.DateTimeEnd.Before(b2.DateTimeEnd)))
 	})
 	return bookings
+}
+
+type OverlappingBookingsError struct {
+	Message             string
+	OverlappingBookings []models.Booking
+}
+
+func NewOverlappingBookingsError(message string, overlappingBookings []models.Booking) *OverlappingBookingsError {
+	return &OverlappingBookingsError{Message: message, OverlappingBookings: overlappingBookings}
+}
+
+func (o *OverlappingBookingsError) Error() string {
+	return fmt.Sprintf(`{message: '%v', overlapping_bookings: '%v'}`, o.Message, o.OverlappingBookings)
 }
