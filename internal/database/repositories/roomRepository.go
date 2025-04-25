@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"humoBooking/internal/models"
 	"log"
@@ -17,7 +18,7 @@ func NewRoomRepositoryPostgres(connection *gorm.DB) *RoomRepository {
 
 func (r *RoomRepository) Create(room models.Room) (models.Room, error) {
 	result := r.connection.
-		Omit("updated_at", "deleted_at").
+		Omit("room_id", "updated_at", "deleted_at").
 		Select("number", "capacity", "created_by").
 		Create(&room)
 
@@ -48,6 +49,11 @@ func (r *RoomRepository) GetRoomById(roomId int) (models.Room, error) {
 		return models.Room{}, err
 	}
 
+	if rowsReturned := result.RowsAffected; rowsReturned == 0 {
+		log.Println("RoomRepository.GetRoomById(): no Rooms were found. Passed data: ", roomId)
+		return models.Room{}, errors.New("no Rooms were found")
+	}
+
 	return foundRoom, nil
 }
 
@@ -62,6 +68,11 @@ func (r *RoomRepository) Update(room models.Room) (models.Room, error) {
 		return room, err
 	}
 
+	if rowsUpdated := result.RowsAffected; rowsUpdated == 0 {
+		log.Println("RoomRepository.Update(): no Rooms were updated. Reason: Room to update not found. Passed data: ", room)
+		return room, errors.New("no Rooms were updated")
+	}
+
 	return room, nil
 }
 
@@ -74,7 +85,8 @@ func (r *RoomRepository) Delete(roomId int) (bool, error) {
 
 	result := r.connection.
 		Select("*").
-		Omit("created_at", "updated_at", "number", "capacity").
+		Where("active = true").
+		Omit("number", "capacity", "created_by", "created_at", "updated_at").
 		Model(&roomToDelete).
 		Updates(&roomToDelete)
 
@@ -82,6 +94,11 @@ func (r *RoomRepository) Delete(roomId int) (bool, error) {
 		log.Println("RoomRepository.Delete(): error occured during Room deletion. Passed data: ", roomId)
 		log.Println(err)
 		return false, err
+	}
+
+	if rowsDeleted := result.RowsAffected; rowsDeleted == 0 {
+		log.Println("RoomRepository.Delete(): no Rooms were deleted. Reason: Room to delete not found. Passed data: ", roomId)
+		return false, errors.New("no Rooms were deleted")
 	}
 
 	return true, nil

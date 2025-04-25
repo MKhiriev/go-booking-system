@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"humoBooking/internal/models"
 	"log"
@@ -44,6 +45,11 @@ func (u *UserRepository) GetUserById(userId int) (models.User, error) {
 		return models.User{}, err
 	}
 
+	if rowsReturned := result.RowsAffected; rowsReturned == 0 {
+		log.Println("UserRepository.GetUserById(): no Users were found. Passed data: ", userId)
+		return models.User{}, errors.New("no Users were found")
+	}
+
 	return foundUser, nil
 }
 
@@ -56,7 +62,12 @@ func (u *UserRepository) Update(user models.User) (models.User, error) {
 	if err := result.Error; err != nil {
 		log.Println("UserRepository.Update(): error occured during User update. Passed data: ", user)
 		log.Println(err)
-		return models.User{}, err
+		return user, err
+	}
+
+	if rowsUpdated := result.RowsAffected; rowsUpdated == 0 {
+		log.Println("UserRepository.Update(): no Users were updated. Reason: User to update not found. Passed data: ", user)
+		return user, errors.New("no Users were updated")
 	}
 
 	return user, nil
@@ -71,6 +82,7 @@ func (u *UserRepository) Delete(userId int) (bool, error) {
 
 	result := u.connection.
 		Select("*").
+		Where("active = true").
 		Omit("created_at", "updated_at", "role_id", "name", "email", "telephone", "username", "password_hash").
 		Model(&userToDelete).
 		Updates(&userToDelete)
@@ -79,6 +91,11 @@ func (u *UserRepository) Delete(userId int) (bool, error) {
 		log.Println("UserRepository.Delete(): error occured during User deletion. Passed data: ", userId)
 		log.Println(err)
 		return false, err
+	}
+
+	if rowsDeleted := result.RowsAffected; rowsDeleted == 0 {
+		log.Println("UserRepository.Update(): no Users were deleted. Reason: User to update not found. Passed data: ", userId)
+		return false, errors.New("no Users were deleted")
 	}
 
 	return true, nil

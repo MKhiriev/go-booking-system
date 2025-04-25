@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 	"gorm.io/gorm"
 	"humoBooking/internal/models"
 	"log"
@@ -25,6 +26,11 @@ func (b *BookingRepository) Update(booking models.Booking) (models.Booking, erro
 		return models.Booking{}, err
 	}
 
+	if rowsUpdated := result.RowsAffected; rowsUpdated == 0 {
+		log.Println("BookingRepository.Update(): no Bookings were updated. Reason: Booking to update not found. Passed data: ", booking)
+		return booking, errors.New("no Bookings were updated")
+	}
+
 	return booking, nil
 }
 
@@ -37,7 +43,8 @@ func (b *BookingRepository) Delete(bookingId int) (bool, error) {
 
 	result := b.connection.
 		Select("*").
-		Omit("created_at", "updated_at", "room_id", "user_id", "datetime_start", "datetime_end").
+		Where("active = true").
+		Omit("created_by", "created_at", "updated_at", "room_id", "user_id", "datetime_start", "datetime_end").
 		Model(&bookingToDelete).
 		Updates(&bookingToDelete)
 
@@ -45,6 +52,11 @@ func (b *BookingRepository) Delete(bookingId int) (bool, error) {
 		log.Println("BookingRepository.Delete(): error occured during Booking deletion. Passed data: ", bookingId)
 		log.Println(err)
 		return false, err
+	}
+
+	if rowsDeleted := result.RowsAffected; rowsDeleted == 0 {
+		log.Println("BookingRepository.Delete(): no Bookings were deleted. Reason: Booking to delete not found. Passed data: ", bookingId)
+		return false, errors.New("no Bookings were deleted")
 	}
 
 	return true, nil
@@ -81,9 +93,14 @@ func (b *BookingRepository) GetBookingById(bookingId int) (models.Booking, error
 
 	result := b.connection.Find(&foundBooking, "booking_id", bookingId)
 	if err := result.Error; err != nil {
-		log.Println("BookingRepository.GetRoomById(): error occured during Booking search. Passed data: ", bookingId)
+		log.Println("BookingRepository.GetBookingById(): error occured during Booking search. Passed data: ", bookingId)
 		log.Println(err)
 		return models.Booking{}, err
+	}
+
+	if rowsReturned := result.RowsAffected; rowsReturned == 0 {
+		log.Println("BookingRepository.GetBookingById(): no Rooms were found. Passed data: ", bookingId)
+		return models.Booking{}, errors.New("no Rooms were found")
 	}
 
 	return foundBooking, nil
@@ -94,7 +111,7 @@ func (b *BookingRepository) GetBookingsByRoomId(roomId int) ([]models.Booking, e
 
 	result := b.connection.Find(&foundBookings, "room_id", roomId)
 	if err := result.Error; err != nil {
-		log.Println("BookingRepository.GetBookingsByRoomId(): error occured during Bookings search. Passed data: ", roomId)
+		log.Println("BookingRepository.GetBookingsByRoomId(): error occured during Bookings search by RoomId. Passed data: ", roomId)
 		log.Println(err)
 		return nil, err
 	}
