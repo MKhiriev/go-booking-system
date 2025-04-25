@@ -33,8 +33,8 @@ func (h *Handlers) BookRoom(w http.ResponseWriter, r *http.Request) {
 	// validate passed booking data
 	validator := NewBookingValidator(&bookingParamsToCreate)
 	if validator.AllBookingFieldsValid != true {
-		log.Println("BookingHandler.BookRoom(): booking data is not valid. Details: ", err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "booking data is not valid", validator)
+		log.Println("BookingHandler.BookRoom(): booking data is not valid. Details: ", validator.ValidationErrors)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "booking data is not valid", validator.ValidationErrors)
 		return
 	}
 
