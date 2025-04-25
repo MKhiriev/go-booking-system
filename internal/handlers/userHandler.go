@@ -21,19 +21,25 @@ func (h *Handlers) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetUserById(w http.ResponseWriter, r *http.Request) {
 	// get user_id from query path
 	userIdStr := r.URL.Query().Get("user_id")
+	if userIdStr == "" {
+		log.Println("UserHandler.DeleteRoom(): parameter `user_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `user_id` is empty or not passed")
+		return
+	}
+
 	// convert user_id param string to int
 	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "UserHandler.GetUserById(): user_id should be an integer!", err.Error())
+		log.Println("UserHandler.GetUserById(): user_id should be an integer. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "user_id should be an integer", err.Error())
 		return
 	}
 
 	// get User from services
 	user, err := h.service.UserService.GetUserById(userId)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "UserService.GetUserById(): error occured", err.Error())
+		log.Println("UserHandler.GetUserById(): error occured during getting user by id. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during getting user by id", err.Error())
 		return
 	}
 
@@ -43,30 +49,46 @@ func (h *Handlers) GetUserById(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// get user_id from query path
-	_ = r.URL.Query().Get("user_id")
+	userIdStr := r.URL.Query().Get("user_id")
+	if userIdStr == "" {
+		log.Println("UserHandler.UpdateUser(): parameter `user_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `user_id` is empty or not passed")
+		return
+	}
+
+	// convert user_id param string to int
+	userId, err := strconv.Atoi(userIdStr)
+	if err != nil {
+		log.Println("UserHandler.UpdateUser(): user_id should be an integer. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "user_id should be an integer", err.Error())
+		return
+	}
 
 	var userParamsToUpdate models.User
 	// convert JSON to models.User type
-	err := json.NewDecoder(r.Body).Decode(&userParamsToUpdate)
+	err = json.NewDecoder(r.Body).Decode(&userParamsToUpdate)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "UserHandler.UpdateUser(): cannot convert JSON to models.User struct", err.Error())
+		log.Println("UserHandler.UpdateUser(): cannot convert JSON to models.User struct. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "cannot convert JSON to models.User struct", err.Error())
 		return
 	}
 
 	// validate passed user data
 	validator := NewUserValidator(&userParamsToUpdate)
 	if validator.AllUserFieldsValid != true {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "UserHandler.UpdateUser(): User data is not valid!", validator)
+		log.Println("UserHandler.UpdateUser(): User data is not valid. Details: ", validator.ValidationErrors)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "User data is not valid", validator.ValidationErrors)
 		return
 	}
+
+	// to double-check if user_id wasn't set
+	userParamsToUpdate.UserId = userId
 
 	// update user
 	updatedUser, err := h.service.UserService.Update(userParamsToUpdate)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "UserService.Update(): error occured", err.Error())
+		log.Println("UserHandler.UpdateUser(): error occured during user update. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during user update", err.Error())
 		return
 	}
 
@@ -76,20 +98,26 @@ func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handlers) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// get user_id from query path
-	id := r.URL.Query().Get("user_id")
+	userIdStr := r.URL.Query().Get("user_id")
+	if userIdStr == "" {
+		log.Println("UserHandler.DeleteUser(): parameter `user_id` is empty or not passed")
+		pkg.ErrorResponse(w, http.StatusBadRequest, "parameter `user_id` is empty or not passed")
+		return
+	}
+
 	// convert user_id param string to int
-	userId, err := strconv.Atoi(id)
+	userId, err := strconv.Atoi(userIdStr)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusBadRequest, "UserHandler.DeleteUser(): user_id should be an integer!")
+		log.Println("UserHandler.DeleteUser(): user_id should be an integer. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusBadRequest, "user_id should be an integer", err.Error())
 		return
 	}
 
 	// delete user
 	_, err = h.service.UserService.Delete(userId)
 	if err != nil {
-		log.Println(err)
-		pkg.ErrorResponse(w, http.StatusInternalServerError, "UserService.Delete(): error occured", err.Error())
+		log.Println("UserHandler.DeleteUser(): error occured during user deletion. Details: ", err)
+		pkg.ErrorResponse(w, http.StatusInternalServerError, "error occured during user deletion", err.Error())
 		return
 	}
 
