@@ -232,11 +232,9 @@ func (a *AuthService) CheckPermissions(destination string, recordType string, re
 		if permission.ScopeId == OwnerScopeId {
 			recordId, conversionError := strconv.Atoi(recordString)
 			if conversionError != nil {
-				log.Println("AuthService.CheckPermissions(): error occured during conversion from `recordString` string to `recordId` integer")
 				return false, conversionError
 			}
 			isOwner, isOwnerError := a.CheckIfUserIsOwner(userId, recordType, recordId)
-			log.Printf("AuthService.CheckPermissions(): if permission.ScopeId == OwnerScopeId | IsUserOwner=%t userId=%d recordType=%s recordId=%d", isOwner, userId, recordType, recordId)
 			if isOwnerError != nil {
 				return false, isOwnerError
 			}
