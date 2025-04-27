@@ -82,7 +82,7 @@ func (u *UserRepository) Delete(userId int) (bool, error) {
 
 	result := u.connection.
 		Select("*").
-		Where("active = true").
+		Where(`"active"=?`, true).
 		Omit("created_at", "updated_at", "role_id", "name", "email", "telephone", "username", "password_hash").
 		Model(&userToDelete).
 		Updates(&userToDelete)

@@ -85,7 +85,7 @@ func (r *RoomRepository) Delete(roomId int) (bool, error) {
 
 	result := r.connection.
 		Select("*").
-		Where("active = true").
+		Where(`"active"=?`, true).
 		Omit("number", "capacity", "created_by", "created_at", "updated_at").
 		Model(&roomToDelete).
 		Updates(&roomToDelete)

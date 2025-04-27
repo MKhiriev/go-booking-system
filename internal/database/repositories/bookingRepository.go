@@ -43,7 +43,7 @@ func (b *BookingRepository) Delete(bookingId int) (bool, error) {
 
 	result := b.connection.
 		Select("*").
-		Where("active = true").
+		Where(`"active"=?`, true).
 		Omit("created_by", "created_at", "updated_at", "room_id", "user_id", "datetime_start", "datetime_end").
 		Model(&bookingToDelete).
 		Updates(&bookingToDelete)

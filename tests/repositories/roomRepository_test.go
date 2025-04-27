@@ -19,8 +19,9 @@ func TestRoomRepository_Create(t *testing.T) {
 
 	newRoomId := 1
 	roomToCreate := models.Room{
-		Number:   "Briefing Room #1",
-		Capacity: 20,
+		Number:    "Briefing Room #1",
+		Capacity:  20,
+		CreatedBy: 1,
 	}
 
 	rows := sqlmock.NewRows([]string{"room_id", "number", "capacity", "active", "created_at"}).
@@ -28,9 +29,9 @@ func TestRoomRepository_Create(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(
-		`INSERT INTO "rooms" ("number","capacity","active","created_at") VALUES ($1,$2,$3,$4)`,
+		`INSERT INTO "rooms" ("number","capacity","created_by","created_at") VALUES ($1,$2,$3,$4)`,
 	)).
-		WithArgs(roomToCreate.Number, roomToCreate.Capacity, roomToCreate.Active, NotNullTimeArg()).
+		WithArgs(roomToCreate.Number, roomToCreate.Capacity, roomToCreate.CreatedBy, NotNullTimeArg()).
 		WillReturnRows(rows)
 	mock.ExpectCommit()
 
@@ -177,9 +178,9 @@ func TestRoomRepository_Delete(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(
-		`UPDATE "rooms" SET "active"=$1,"deleted_at"=$2 WHERE "room_id" = $3`,
+		`UPDATE "rooms" SET "active"=$1,"deleted_at"=$2 WHERE "active"=$3 AND "room_id" = $4`,
 	)).
-		WithArgs(false, NotNullTimeArg(), roomId).
+		WithArgs(false, NotNullTimeArg(), true, roomId).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 

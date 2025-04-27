@@ -29,16 +29,17 @@ func TestBookingRepository_Create(t *testing.T) {
 		RoomId:        roomId,
 		DateTimeStart: dateTimeStart,
 		DateTimeEnd:   dateTimeEnd,
+		CreatedBy:     userId,
 	}
 
-	rows := sqlmock.NewRows([]string{"booking_id", "user_id", "room_id", "datetime_start", "datetime_end", "active", "created_at"}).
-		AddRow(1, bookingToCreate.UserId, bookingToCreate.RoomId, bookingToCreate.DateTimeStart, bookingToCreate.DateTimeEnd, true, time.Now())
+	rows := sqlmock.NewRows([]string{"booking_id", "user_id", "room_id", "datetime_start", "datetime_end", "active", "created_by", "created_at"}).
+		AddRow(1, bookingToCreate.UserId, bookingToCreate.RoomId, bookingToCreate.DateTimeStart, bookingToCreate.DateTimeEnd, true, bookingToCreate.CreatedBy, time.Now())
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(
-		`INSERT INTO "bookings" ("user_id","room_id","datetime_start","datetime_end","created_at") VALUES ($1,$2,$3,$4,$5)`,
+		`INSERT INTO "bookings" ("user_id","room_id","datetime_start","datetime_end","created_by","created_at") VALUES ($1,$2,$3,$4,$5,$6)`,
 	)).
-		WithArgs(bookingToCreate.UserId, bookingToCreate.RoomId, bookingToCreate.DateTimeStart, bookingToCreate.DateTimeEnd, NotNullTimeArg()).
+		WithArgs(bookingToCreate.UserId, bookingToCreate.RoomId, bookingToCreate.DateTimeStart, bookingToCreate.DateTimeEnd, bookingToCreate.CreatedBy, NotNullTimeArg()).
 		WillReturnRows(rows)
 	mock.ExpectCommit()
 
@@ -214,9 +215,9 @@ func TestBookingRepository_Delete(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(
-		`UPDATE "bookings" SET "active"=$1,"deleted_at"=$2 WHERE "booking_id" = $3`,
+		`UPDATE "bookings" SET "active"=$1,"deleted_at"=$2  WHERE "active"=$3 AND "booking_id" = $4`,
 	)).
-		WithArgs(false, NotNullTimeArg(), bookingId).
+		WithArgs(false, NotNullTimeArg(), true, bookingId).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 

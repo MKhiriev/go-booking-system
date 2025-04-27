@@ -21,17 +21,20 @@ func TestUserRepository_Create(t *testing.T) {
 		Name:      "Ahmad",
 		Email:     "ahmad@example.com",
 		Telephone: "+992989991745",
+		RoleId:    1,
+		UserName:  "ahmad.tee",
+		Password:  "completelySafePassword_hashedWithSalt",
 	}
 
-	rows := sqlmock.NewRows([]string{"user_id", "name", "email", "telephone", "role_id", "active", "created_at"}).
-		AddRow(1, userToCreate.Name, userToCreate.Email, userToCreate.Telephone, userToCreate.RoleId, true, time.Now())
+	rows := sqlmock.NewRows([]string{"user_id", "name", "email", "telephone", "role_id", "username", "password_hash", "active", "created_at"}).
+		AddRow(1, userToCreate.Name, userToCreate.Email, userToCreate.Telephone, userToCreate.RoleId, userToCreate.UserName, userToCreate.Password, true, time.Now())
 
 	mock.ExpectBegin()
 	mock.ExpectQuery(regexp.QuoteMeta(
 		// column order is defined by struct's fields order
-		`INSERT INTO "users" ("name","email","telephone","role_id","active","created_at") VALUES ($1,$2,$3,$4,$5,$6)`,
+		`INSERT INTO "users" ("name","email","telephone","role_id","username","password_hash","active","created_at") VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
 	)).
-		WithArgs(userToCreate.Name, userToCreate.Email, userToCreate.Telephone, userToCreate.RoleId, userToCreate.Active, NotNullTimeArg()).
+		WithArgs(userToCreate.Name, userToCreate.Email, userToCreate.Telephone, userToCreate.RoleId, userToCreate.UserName, userToCreate.Password, userToCreate.Active, NotNullTimeArg()).
 		WillReturnRows(rows)
 	mock.ExpectCommit()
 
@@ -213,10 +216,10 @@ func TestUserRepository_Delete(t *testing.T) {
 	// check if GORM sql-query matches our pattern
 	mock.ExpectExec(regexp.QuoteMeta(
 		// column order is defined by struct's fields order
-		`UPDATE "users" SET "active"=$1,"deleted_at"=$2 WHERE "user_id" = $3`,
+		`UPDATE "users" SET "active"=$1,"deleted_at"=$2 WHERE "active"=$3 AND "user_id" = $4`,
 	)).
 		// where args are ["active": false, "deleted_at": generated current_timestamp, "user_id": user_id]
-		WithArgs(false, NotNullTimeArg(), userId).
+		WithArgs(false, NotNullTimeArg(), true, userId).
 		// will return count: 1 row that is going to BE UPDATED
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	// check if COMMIT
@@ -246,7 +249,7 @@ func TestBookingRepository_UpdateUserPassword(t *testing.T) {
 
 	mock.ExpectBegin()
 	mock.ExpectExec(regexp.QuoteMeta(
-		`UPDATE "users" SET "password"=$1,"updated_at"=$2 WHERE "user_id" = $3`,
+		`UPDATE "users" SET "password_hash"=$1,"updated_at"=$2 WHERE "user_id" = $3`,
 	)).
 		WithArgs(updateData.Password, NotNullTimeArg(), updateData.UserId).
 		WillReturnResult(sqlmock.NewResult(0, 1))
