@@ -1,0 +1,14 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Booking system written in go. Implemented Authorization, Handlers, Services, Repositories, Models for booking.",
+        "title": "go-booking-system",
+        "contact": {
+            "name": "Rasul Khiriev",
+            "url": "https://github.com/MKhiriev/go-booking-system",
+            "email": "khiriev.rasul@inbox.ru"
+        },
+        "version": "1.0"
+    },
+    "paths": {}
+}

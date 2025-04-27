@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
+	_ "humoBooking/cmd/docs"
 	"humoBooking/internal/database"
 	"humoBooking/internal/handlers"
 	"humoBooking/internal/server"
@@ -10,7 +11,13 @@ import (
 	"log"
 )
 
-// TODO добавить JWT токен!!! jwt.CustomClaims
+// @title go-booking-system
+// @version 1.0
+// @description Booking system written in go. Implemented Authorization, Handlers, Services, Repositories, Models for booking.
+
+// @contact.name Rasul Khiriev
+// @contact.url https://github.com/MKhiriev/go-booking-system
+// @contact.email khiriev.rasul@inbox.ru
 func main() {
 	if err := InitConfig(); err != nil {
 		log.Fatal("InitConfig(): error loading config.yaml", err)

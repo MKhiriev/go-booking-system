@@ -1,0 +1,11 @@
+info:
+  contact:
+    email: khiriev.rasul@inbox.ru
+    name: Rasul Khiriev
+    url: https://github.com/MKhiriev/go-booking-system
+  description: Booking system written in go. Implemented Authorization, Handlers,
+    Services, Repositories, Models for booking.
+  title: go-booking-system
+  version: "1.0"
+paths: {}
+swagger: "2.0"

@@ -48,6 +48,12 @@ func (h *Handlers) AuthorizationCheck(next http.Handler) http.Handler {
 		destinationPathIsAuthLogin := destination.Path == "/auth/login"
 		destinationPathIsAuthRegister := destination.Path == "/auth/register"
 		destinationPathIsAuthRefresh := destination.Path == "/auth/refresh"
+		destinationPathIsSwagger := strings.HasPrefix(destination.Path, "/swagger")
+
+		if destinationPathIsSwagger {
+			next.ServeHTTP(w, r)
+			return
+		}
 
 		// if user want to refresh tokens => check if authorization header is not empty - success
 		if destinationPathIsAuthRefresh {

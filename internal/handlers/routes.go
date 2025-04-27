@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"humoBooking/internal/services"
 	"net/http"
 )
@@ -50,6 +51,15 @@ func (h *Handlers) Init() *mux.Router {
 	booking.HandleFunc("/create", h.BookRoom).Methods(http.MethodPost, http.MethodOptions)
 	booking.HandleFunc("/overlapping", h.GetOverlappingBookings).Methods(http.MethodGet, http.MethodOptions)
 	booking.HandleFunc("/update", h.UpdateBooking).Methods(http.MethodPatch, http.MethodOptions)
+
+	// Swagger Handler
+	swagger := router.PathPrefix("/swagger")
+	swagger.Handler(httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"), //The url pointing to API definition
+		httpSwagger.DeepLinking(true),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+	)).Methods(http.MethodGet)
 
 	return router
 }
