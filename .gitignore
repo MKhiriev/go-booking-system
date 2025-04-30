@@ -1,5 +1,3 @@
-# Config files
+.idea
 .env
 internal/configs/config.yaml
-
-.idea
