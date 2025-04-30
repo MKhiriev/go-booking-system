@@ -3,7 +3,7 @@ package handlers
 import (
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
-	"humoBooking/internal/services"
+	"go-booking-system/internal/services"
 	"net/http"
 )
 

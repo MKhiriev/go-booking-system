@@ -1,9 +1,9 @@
 package services
 
 import (
-	"humoBooking/internal/database"
-	"humoBooking/internal/models"
-	"humoBooking/pkg"
+	"go-booking-system/internal/database"
+	"go-booking-system/internal/models"
+	"go-booking-system/pkg"
 	"time"
 )
 

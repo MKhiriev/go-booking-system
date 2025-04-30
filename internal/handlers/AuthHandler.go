@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"humoBooking/internal/models"
-	"humoBooking/internal/services"
-	"humoBooking/pkg"
+	"go-booking-system/internal/models"
+	"go-booking-system/internal/services"
+	"go-booking-system/pkg"
 	"log"
 	"net/http"
 	"strconv"

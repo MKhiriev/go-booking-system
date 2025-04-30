@@ -1,8 +1,8 @@
 package services
 
 import (
-	"humoBooking/internal/database"
-	"humoBooking/internal/models"
+	"go-booking-system/internal/database"
+	"go-booking-system/internal/models"
 )
 
 type RoomService struct {

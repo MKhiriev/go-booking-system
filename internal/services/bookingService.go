@@ -2,8 +2,8 @@ package services
 
 import (
 	"fmt"
-	"humoBooking/internal/database"
-	"humoBooking/internal/models"
+	"go-booking-system/internal/database"
+	"go-booking-system/internal/models"
 	"sort"
 	"time"
 )

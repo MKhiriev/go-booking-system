@@ -19,7 +19,7 @@ type JOSEHeader struct {
 }
 
 type AccessTokenClaims struct {
-	Issuer              string            `json:"iss"`   // who/what issued token - `humo_booking`
+	Issuer              string            `json:"iss"`   // who/what issued token - `go_booking`
 	IssuedAt            int               `json:"iat"`   // when token was issued
 	ExpirationTime      int               `json:"exp"`   // when token expires
 	Subject             string            `json:"sub"`   // who gets token UserID - SHOULD BE string ref:https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2

@@ -2,8 +2,8 @@ package repositories
 
 import (
 	"errors"
+	"go-booking-system/internal/models"
 	"gorm.io/gorm"
-	"humoBooking/internal/models"
 	"log"
 	"time"
 )

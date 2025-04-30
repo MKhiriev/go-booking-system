@@ -3,8 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"go-booking-system/internal/models"
 	"gorm.io/gorm"
-	"humoBooking/internal/models"
 	"log"
 	"time"
 )

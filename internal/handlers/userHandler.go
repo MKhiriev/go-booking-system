@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"humoBooking/internal/models"
-	"humoBooking/pkg"
+	"go-booking-system/internal/models"
+	"go-booking-system/pkg"
 	"log"
 	"net/http"
 	"regexp"

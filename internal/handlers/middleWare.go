@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"humoBooking/pkg"
+	"go-booking-system/pkg"
 	"log"
 	"net/http"
 	"strings"

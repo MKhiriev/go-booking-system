@@ -3,8 +3,8 @@ package repositories
 import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"humoBooking/internal/database/repositories"
-	"humoBooking/internal/models"
+	"go-booking-system/internal/database/repositories"
+	"go-booking-system/internal/models"
 	"regexp"
 	"testing"
 	"time"

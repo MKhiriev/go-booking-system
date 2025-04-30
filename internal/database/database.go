@@ -1,9 +1,9 @@
 package database
 
 import (
+	"go-booking-system/internal/database/repositories"
+	"go-booking-system/internal/models"
 	"gorm.io/gorm"
-	"humoBooking/internal/database/repositories"
-	"humoBooking/internal/models"
 	"time"
 )
 

@@ -3,11 +3,11 @@ package main
 import (
 	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
-	_ "humoBooking/cmd/docs"
-	"humoBooking/internal/database"
-	"humoBooking/internal/handlers"
-	"humoBooking/internal/server"
-	"humoBooking/internal/services"
+	_ "go-booking-system/cmd/docs"
+	"go-booking-system/internal/database"
+	"go-booking-system/internal/handlers"
+	"go-booking-system/internal/server"
+	"go-booking-system/internal/services"
 	"log"
 )
 
